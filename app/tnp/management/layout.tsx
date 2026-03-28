@@ -1,0 +1,162 @@
+"use client";
+
+import { ReactNode, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+
+import {
+  LayoutDashboard,
+  TrendingUp,
+  FileText,
+  Settings,
+  Bell,
+  Search,
+  User,
+  LogOut,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { NavItem } from "../type";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+export default function ManagementLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // ✅ FIXED: icon as JSX (not component reference)
+  const navItems: NavItem[] = [
+    {
+      label: "Dashboard",
+      path: "/tnp/management/dashboard",
+      icon: <LayoutDashboard className="w-5 h-5" />,
+    },
+    {
+      label: "Analytics",
+      path: "/tnp/management/analytics",
+      icon: <TrendingUp className="w-5 h-5" />,
+    },
+    {
+      label: "Reports",
+      path: "/tnp/management/reports",
+      icon: <FileText className="w-5 h-5" />,
+    },
+    {
+      label: "Settings",
+      path: "/tnp/management/settings",
+      icon: <Settings className="w-5 h-5" />,
+    },
+  ];
+
+  const handleLogout = () => {
+    router.push("/");
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      {/* ✅ Sidebar */}
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-xl font-semibold text-indigo-600">
+            CPMS
+          </h1>
+          <p className="text-sm text-gray-500">TnP Management</p>
+        </div>
+
+        <nav className="flex-1 p-4 space-y-1">
+          {navItems.map((item) => {
+            const isActive = pathname === item.path;
+
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  isActive
+                    ? "bg-indigo-50 text-indigo-600"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                {item.icon}
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* ✅ Main Section */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* ✅ Navbar (Dashboard Style) */}
+        <header className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Search */}
+            <div className="flex-1 max-w-xl relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+
+              <Input
+                type="search"
+                placeholder="Search..."
+                className="pl-10 bg-gray-50 border-gray-200"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* Right Side */}
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon">
+                <Bell className="w-5 h-5" />
+              </Button>
+
+              {/* Profile */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback>MG</AvatarFallback>
+                    </Avatar>
+                    <span>Management</span>
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" /> Profile
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" /> Settings
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </header>
+
+        {/* ✅ Content */}
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      </div>
+    </div>
+  );
+}

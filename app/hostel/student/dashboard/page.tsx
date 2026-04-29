@@ -1,5 +1,5 @@
 import React from 'react'
-import StudentDashboard from './component/dashboard'
+import StudentDashboard from '../component/dashboard'
 
 const page = () => {
   return (
@@ -9,4 +9,4 @@ const page = () => {
   )
 }
 
-export default page
+export default page 

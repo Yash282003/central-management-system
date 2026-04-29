@@ -1,30 +1,28 @@
-import { Student } from "@/models/studentInfo";
+import { ConnectDb } from "@/helper/db";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { ConnectDb } from "@/helper/db";
+import { Teacher } from "@/models/teacherInfo";
 
 ConnectDb();
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { regdNo, password } = body;
+    const { email, password } = body;
 
     // ✅ Basic validation
-    if (!regdNo || !password) {
+    if (!email || !password) {
       return NextResponse.json(
-        { success: false, message: "Registration Number and password are required" },
+        { success: false, message: "Email and password are required" },
         { status: 400 }
       );
     }
 
-    // ✅ Find student
-    const student = await Student.findOne({ regdNo });
+    // ✅ Find teacher
+    const teacher = await Teacher.findOne({ email });
 
-    console.log(regdNo);
-
-    if (!student) {
+    if (!teacher) {
       return NextResponse.json(
         { success: false, message: "User not found" },
         { status: 404 }
@@ -32,7 +30,7 @@ export async function POST(request) {
     }
 
     // ✅ Compare password
-    const passwordMatch = await bcrypt.compare(password, student.password);
+    const passwordMatch = await bcrypt.compare(password, teacher.password);
 
     if (!passwordMatch) {
       return NextResponse.json(
@@ -43,7 +41,7 @@ export async function POST(request) {
 
     // ✅ Sign JWT token
     const token = jwt.sign(
-      { _id: student._id, name: student.name },
+      { _id: teacher._id, name: teacher.name },
       process.env.JWT_KEY
     );
 
@@ -51,11 +49,11 @@ export async function POST(request) {
       success: true,
       message: "Login successful",
       data: {
-        _id: student._id,
-        name: student.name,
-        email: student.email,
-        branch: student.branch,
-        regdNo: student.regdNo,
+        _id: teacher._id,
+        name: teacher.name,
+        email: teacher.email,
+        department: teacher.department,
+        employeeId: teacher.employeeId,
       },
     });
 
@@ -66,9 +64,9 @@ export async function POST(request) {
 
     return response;
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: "Login failed" },
       { status: 500 }
     );
   }

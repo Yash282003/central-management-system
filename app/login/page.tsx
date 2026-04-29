@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, GraduationCap, BookOpen, Shield } from "lucide-react";
+import { Loginstudent } from "@/services/student/login";
 
 type Role = "student" | "teacher" | "admin";
 
@@ -52,7 +53,7 @@ export default function LoginPage() {
 
   const config = roleConfig[role];
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id.trim() || !password.trim()) {
       setError("Please enter your ID and password.");
@@ -60,10 +61,19 @@ export default function LoginPage() {
     }
     setError("");
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      router.push(config.redirect);
-    }, 800);
+    try {
+      if(role === "student"){
+        const res = await Loginstudent({ regdNo: id, password });
+        if(res.success){
+          setLoading(false);
+          router.push(config.redirect);
+        }else{
+          setError(res.message);
+        }
+      }
+    }catch(error){
+      console.log(error);
+    }
   };
 
   return (

@@ -267,7 +267,7 @@ const result = await Signupstudent(payload);
           </p>
           <button
             id="signup-go-login"
-            onClick={() => router.push("/dept/login")}
+            onClick={() => router.push("/login")}
             className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-all active:scale-[0.98]"
           >
             Go to Login
@@ -711,7 +711,7 @@ const result = await Signupstudent(payload);
         Already have an account?{" "}
         <button
           id="signup-go-to-login"
-          onClick={() => router.push("/dept/login")}
+          onClick={() => router.push("/login")}
           className="text-blue-600 hover:underline font-semibold"
         >
           Sign in

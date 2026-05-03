@@ -2,17 +2,28 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, Bell, AlertTriangle, MessageSquare, FileText } from "lucide-react";
-
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function StudentDashboard() {
-//   const navigate = useNavigate();
+const router = useRouter();
 
-  const studentInfo = {
-    name: "Rahul Sharma",
-    regNo: "21BCE1234",
-    hostel: "Ganga Hostel",
-    room: "A-204",
+const [studentInfo, setStudentInfo] = useState<any>(null);
+
+useEffect(() => {
+  const fetchStudent = async () => {
+    try {
+      const res = await fetch("/api/student/hostel"); 
+      const data = await res.json();
+      setStudentInfo(data);
+      console.log(data)
+    } catch (error) {
+      console.error("Failed to fetch student", error);
+    }
   };
+
+  fetchStudent();
+}, []);
 
   const recentNotifications = [
     { id: 1, title: "Room Inspection Tomorrow", time: "2 hours ago", type: "info" },
@@ -28,7 +39,7 @@ export default function StudentDashboard() {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Welcome back, {studentInfo.name}!</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Welcome Back!, {studentInfo?.name}!</h1>
         <p className="text-slate-600 mt-1">Here's what's happening with your hostel today</p>
       </div>
 
@@ -44,15 +55,15 @@ export default function StudentDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-slate-300 text-sm">Registration No.</p>
-              <p className="font-semibold mt-1">{studentInfo.regNo}</p>
+              <p className="font-semibold mt-1">{studentInfo?.regd}</p>
             </div>
             <div>
               <p className="text-slate-300 text-sm">Hostel</p>
-              <p className="font-semibold mt-1">{studentInfo.hostel}</p>
+              <p className="font-semibold mt-1">{studentInfo?.hostel}</p>
             </div>
             <div className="col-span-2 md:col-span-1">
               <p className="text-slate-300 text-sm">Room Number</p>
-              <p className="font-semibold mt-1 text-xl">{studentInfo.room}</p>
+              <p className="font-semibold mt-1 text-xl">{studentInfo?.room}</p>
             </div>
           </div>
         </CardContent>
@@ -61,7 +72,7 @@ export default function StudentDashboard() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Button 
-        //   onClick={() => navigate("/student/complaints")}
+        onClick={() => router.push("/hostel/student/complaints")}
           size="lg" 
           className="h-auto py-4 justify-start"
         >
@@ -73,7 +84,7 @@ export default function StudentDashboard() {
         </Button>
         
         <Button 
-        //   onClick={() => navigate("/student/applications")}
+          onClick={() => router.push("/hostel/student/applications")}
           size="lg" 
           variant="outline"
           className="h-auto py-4 justify-start border-slate-300"
@@ -95,7 +106,7 @@ export default function StudentDashboard() {
               Recent Notifications
             </CardTitle>
             <Button variant="ghost" size="sm" 
-            // onClick={() => navigate("/student/notifications")}
+            onClick={() => router.push("/hostel/student/notifications")}
             >
               View All
             </Button>
@@ -127,7 +138,7 @@ export default function StudentDashboard() {
               Active Complaints
             </CardTitle>
             <Button variant="ghost" size="sm" 
-            // onClick={() => navigate("/student/complaints")}
+             onClick={() => router.push("/hostel/student/complaints")}
             >
               View All
             </Button>

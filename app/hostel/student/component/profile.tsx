@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,11 +9,8 @@ import { toast } from "sonner";
 
 export default function StudentProfile() {
   const [isEditing, setIsEditing] = useState(false);
-  
-  // Non-editable fields
-  const [name] = useState("Rahul Sharma");
-  const [regNo] = useState("21BCE1234");
-  const [room] = useState("A-204");
+
+ const [student, setStudent] = useState<any>(null);
   
   // Editable fields
   const [branch, setBranch] = useState("Computer Science Engineering");
@@ -25,6 +22,29 @@ export default function StudentProfile() {
   const [emergencyContact, setEmergencyContact] = useState("+91 98765 43201");
   const [emergencyContactName, setEmergencyContactName] = useState("Mrs. Priya Sharma");
 
+  useEffect(() => {
+  const fetchStudent = async () => {
+    try {
+      const res = await fetch("/api/student/hostel");
+      const data = await res.json();
+      setStudent(data);
+
+      // initialize editable fields also
+      setBranch(data?.branch || "");
+      setPhone(data?.phone || "");
+      setEmail(data?.email || "");
+      setParentName(data?.parentName || "");
+      setParentPhone(data?.parentPhone || "");
+      setAddress(data?.address || "");
+      setEmergencyContact(data?.emergencyContact || "");
+      setEmergencyContactName(data?.emergencyContactName || "");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  fetchStudent();
+}, []);
   const handleSave = () => {
     toast.success("Profile updated successfully");
     setIsEditing(false);
@@ -63,9 +83,9 @@ export default function StudentProfile() {
               )}
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900">{name}</h3>
-              <p className="text-sm text-slate-600">{regNo}</p>
-              <p className="text-sm text-slate-600">Room: {room}</p>
+             <h3 className="font-semibold text-slate-900">{student?.name}</h3>
+<p className="text-sm text-slate-600">{student?.regd}</p>
+<p className="text-sm text-slate-600">Room: {student?.room}</p>
             </div>
           </div>
         </CardContent>
@@ -80,24 +100,24 @@ export default function StudentProfile() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Full Name</Label>
-              <Input value={name} disabled className="bg-slate-50" />
+              <Input value={student?.name} disabled className="bg-slate-50" />
               <p className="text-xs text-slate-500">This field cannot be edited</p>
             </div>
             <div className="space-y-2">
               <Label>Registration Number</Label>
-              <Input value={regNo} disabled className="bg-slate-50" />
+              <Input value={student?.regd} disabled className="bg-slate-50" />
               <p className="text-xs text-slate-500">This field cannot be edited</p>
             </div>
             <div className="space-y-2">
               <Label>Room Number</Label>
-              <Input value={room} disabled className="bg-slate-50" />
+              <Input value={student?.room} disabled className="bg-slate-50" />
               <p className="text-xs text-slate-500">This field cannot be edited</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="branch">Branch</Label>
               <Input
                 id="branch"
-                value={branch}
+                value={student?.course}
                 onChange={(e) => setBranch(e.target.value)}
                 disabled={!isEditing}
                 className={!isEditing ? "bg-slate-50" : ""}

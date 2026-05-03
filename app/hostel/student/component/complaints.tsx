@@ -133,7 +133,7 @@ export default function StudentComplaints() {
               Raise Complaint
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="bg-white/95 backdrop-blur-md z-50">
             <DialogHeader>
               <DialogTitle>Raise a Complaint</DialogTitle>
               <DialogDescription>
@@ -148,7 +148,7 @@ export default function StudentComplaints() {
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="backdrop-blur-md z-50">
                     <SelectItem value="mess">Mess</SelectItem>
                     <SelectItem value="room-utilities">Room Utilities</SelectItem>
                     <SelectItem value="common-issues">Common Issues</SelectItem>

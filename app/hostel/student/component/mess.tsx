@@ -74,7 +74,7 @@ export default function StudentMess() {
                   How to use?
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="bg-white/95 backdrop-blur-md z-50">
                 <DialogHeader>
                   <DialogTitle>QR Code Instructions</DialogTitle>
                   <DialogDescription>

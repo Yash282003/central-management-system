@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/hostel/student" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/hostel/student/dashboard" },
   { icon: Bell, label: "Notifications", path: "/hostel/student/notifications" },
   { icon: MessageSquare, label: "Complaints", path: "/hostel/student/complaints" },
   { icon: FileText, label: "Applications", path: "/hostel/student/applications" },

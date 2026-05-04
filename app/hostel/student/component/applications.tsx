@@ -110,24 +110,57 @@ export default function StudentApplications() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
-          <TabsTrigger value="leave">
-            <Calendar className="w-4 h-4 mr-2" />
-            Leave
-          </TabsTrigger>
-          <TabsTrigger value="room-change">
-            <Home className="w-4 h-4 mr-2" />
-            Room Change
-          </TabsTrigger>
-          <TabsTrigger value="withdrawal">
-            <LogOutIcon className="w-4 h-4 mr-2" />
-            Withdrawal
-          </TabsTrigger>
-          <TabsTrigger value="my-applications">
-            <FileText className="w-4 h-4 mr-2" />
-            My Applications
-          </TabsTrigger>
-        </TabsList>
+        <TabsList className="flex w-full max-w-2xl p-1 bg-gray-100 rounded-full overflow-x-auto">
+
+  <TabsTrigger
+    value="leave"
+    className="flex items-center justify-center flex-1 px-4 py-2 text-sm font-medium rounded-full
+    data-[state=active]:bg-white
+    data-[state=active]:shadow-sm
+    data-[state=active]:text-black
+    text-gray-500 transition whitespace-nowrap"
+  >
+    <Calendar className="w-4 h-4 mr-2" />
+    Leave
+  </TabsTrigger>
+
+  <TabsTrigger
+    value="room-change"
+    className="flex items-center justify-center flex-1 px-4 py-2 text-sm font-medium rounded-full
+    data-[state=active]:bg-white
+    data-[state=active]:shadow-sm
+    data-[state=active]:text-black
+    text-gray-500 transition whitespace-nowrap"
+  >
+    <Home className="w-4 h-4 mr-2" />
+    Room Change
+  </TabsTrigger>
+
+  <TabsTrigger
+    value="withdrawal"
+    className="flex items-center justify-center flex-1 px-4 py-2 text-sm font-medium rounded-full
+    data-[state=active]:bg-white
+    data-[state=active]:shadow-sm
+    data-[state=active]:text-black
+    text-gray-500 transition whitespace-nowrap"
+  >
+    <LogOutIcon className="w-4 h-4 mr-2" />
+    Withdrawal
+  </TabsTrigger>
+
+  <TabsTrigger
+    value="my-applications"
+    className="flex items-center justify-center flex-1 px-4 py-2 text-sm font-medium rounded-full
+    data-[state=active]:bg-white
+    data-[state=active]:shadow-sm
+    data-[state=active]:text-black
+    text-gray-500 transition whitespace-nowrap"
+  >
+    <FileText className="w-4 h-4 mr-2" />
+    My Applications
+  </TabsTrigger>
+
+</TabsList>
 
         {/* Leave Application */}
         <TabsContent value="leave" className="mt-6">

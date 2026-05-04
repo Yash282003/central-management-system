@@ -22,6 +22,8 @@ import {
   FileCheck,
   TrendingUp
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
 
 const availableCompanies = [
   { name: 'Google', role: 'Software Engineer', package: '28 LPA', eligibility: 'CGPA ≥ 8.0' },
@@ -63,6 +65,7 @@ const notifications = [
 ];
 
 export default function StudentDashboard() {
+  const router=useRouter()
   return (
     
       <div className="space-y-6">
@@ -114,7 +117,7 @@ export default function StudentDashboard() {
                 <p className="text-sm text-gray-600">
                   Complete your profile to unlock more opportunities
                 </p>
-                <Button className="bg-indigo-600 hover:bg-indigo-700">
+                <Button onClick={()=>{router.push("/tnp/student/profile")}} className="bg-indigo-600 hover:bg-indigo-700">
                   Complete Profile
                 </Button>
               </div>

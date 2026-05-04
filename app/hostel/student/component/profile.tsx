@@ -62,7 +62,7 @@ export default function StudentProfile() {
           <p className="text-slate-600 mt-1">Manage your personal information</p>
         </div>
         {!isEditing && (
-          <Button onClick={() => setIsEditing(true)}>
+          <Button onClick={() => setIsEditing(true)} className="bg-gradient-to-br from-slate-900 to-slate-800 text-white">
             Edit Profile
           </Button>
         )}

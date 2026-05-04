@@ -106,9 +106,9 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
               </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-white/95 backdrop-blur-md z-50">
               <DropdownMenuItem asChild>
-                <Link href="/student/profile" className="flex items-center">
+                <Link href="/hostel/student/profile" className="flex items-center">
                   <User className="w-4 h-4 mr-2" />
                   Profile
                 </Link>

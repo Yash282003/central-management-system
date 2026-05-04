@@ -74,9 +74,9 @@ useEffect(() => {
         <Button 
         onClick={() => router.push("/hostel/student/complaints")}
           size="lg" 
-          className="h-auto py-4 justify-start"
+          className="h-auto py-4 justify-start bg-gradient-to-br from-slate-900 to-slate-800 text-white"
         >
-          <MessageSquare className="w-5 h-5 mr-3" />
+          <MessageSquare className="w-5 h-5 mr-3 " />
           <div className="text-left">
             <div className="font-semibold">Raise a Complaint</div>
             <div className="text-xs opacity-90">Report an issue or concern</div>

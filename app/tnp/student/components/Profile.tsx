@@ -78,12 +78,37 @@ export default function StudentProfile() {
       </div>
 
       <Tabs defaultValue="personal" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
-          <TabsTrigger value="personal">Personal Info</TabsTrigger>
-          <TabsTrigger value="academic">Academic</TabsTrigger>
-          <TabsTrigger value="professional">Professional</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-        </TabsList>
+          <TabsList className="flex w-full bg-gray-100 p-1 rounded-full mb-6">
+    
+    <TabsTrigger
+      value="personal"
+      className="flex-1 rounded-full px-4 py-2 text-sm font-medium text-gray-600 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm transition"
+    >
+      Personal Info
+    </TabsTrigger>
+
+    <TabsTrigger
+      value="academic"
+      className="flex-1 rounded-full px-4 py-2 text-sm font-medium text-gray-600 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm transition"
+    >
+      Academic
+    </TabsTrigger>
+
+    <TabsTrigger
+      value="professional"
+      className="flex-1 rounded-full px-4 py-2 text-sm font-medium text-gray-600 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm transition"
+    >
+      Professional
+    </TabsTrigger>
+
+    <TabsTrigger
+      value="documents"
+      className="flex-1 rounded-full px-4 py-2 text-sm font-medium text-gray-600 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm transition"
+    >
+      Documents
+    </TabsTrigger>
+
+  </TabsList>
 
         {/* ✅ PERSONAL INFO (UPDATED) */}
         <TabsContent value="personal">

@@ -4,9 +4,34 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { currentUser, statsData, notices, timetable, attendance } from "../../data/mockdata";
-
+import { useEffect, useState } from "react";
+import { getDetails } from "@/services/student/me/getDetails";
+interface Student {
+  _id: string;
+  regdNo: string;
+  branch: string;
+  mobile: string;
+  email: string;
+  dob: string;
+  address: string;
+  profileUrl: string;
+  name: {
+    first: string;
+    middle: string;
+    last: string;
+  };
+}
 export default function StudentDashboard() {
-  const user = currentUser.student;
+    const [user, setUser] = useState<Student | null>(null);
+    useEffect(() => {
+      const loadData = async () => {
+        const res = await getDetails();
+        if (res?.success) {
+          setUser(res.data);
+        }
+      };
+      loadData();
+    }, []);
   const stats = statsData.student;
   const todaySchedule = timetable[0].slots; // Monday for demo
   const recentNotices = notices.slice(0, 3);
@@ -16,7 +41,7 @@ export default function StudentDashboard() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-          Welcome back, {user.name}!
+          Welcome back, {user ? `${user.name.first} ${user.name.last}` : "Loading..."}!
         </h1>
         <p className="text-gray-600">
           Here's what's happening with your courses today.

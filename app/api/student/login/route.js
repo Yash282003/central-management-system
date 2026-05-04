@@ -11,65 +11,31 @@ export async function POST(request) {
     const body = await request.json();
     const { regdNo, password } = body;
 
-    // ✅ Basic validation
-    if (!regdNo || !password) {
-      return NextResponse.json(
-        { success: false, message: "Registration Number and password are required" },
-        { status: 400 }
-      );
-    }
-
-    // ✅ Find student
     const student = await Student.findOne({ regdNo });
 
-    console.log(regdNo);
-
     if (!student) {
-      return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: "User not found" });
     }
 
-    // ✅ Compare password
-    const passwordMatch = await bcrypt.compare(password, student.password);
+    const isMatch = await bcrypt.compare(password, student.password);
 
-    if (!passwordMatch) {
-      return NextResponse.json(
-        { success: false, message: "Invalid password" },
-        { status: 401 }
-      );
+    if (!isMatch) {
+      return NextResponse.json({ success: false, message: "Invalid password" });
     }
 
-    // ✅ Sign JWT token
     const token = jwt.sign(
-      { _id: student._id, name: student.name },
-      process.env.JWT_KEY
+      { _id: student._id },
+      process.env.JWT_KEY,
+      { expiresIn: "1d" }
     );
-
-    const response = NextResponse.json({
+console.log(token)
+    return NextResponse.json({
       success: true,
-      message: "Login successful",
-      data: {
-        _id: student._id,
-        name: student.name,
-        email: student.email,
-        branch: student.branch,
-        regdNo: student.regdNo,
-      },
+      token, // ✅ IMPORTANT
+      data: student,
     });
 
-    response.cookies.set("authToken", token, {
-      httpOnly: true,
-      maxAge: 60 * 60 * 24, // 1 day
-    });
-
-    return response;
   } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: error.message });
   }
 }

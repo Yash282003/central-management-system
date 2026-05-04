@@ -1,6 +1,13 @@
-"use client"
+"use client";
 import { useState } from "react";
-import { MessageSquare, Plus, Image as ImageIcon, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  MessageSquare,
+  Plus,
+  Image as ImageIcon,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,8 +15,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function StudentComplaints() {
   const [category, setCategory] = useState("");
@@ -23,11 +43,13 @@ export default function StudentComplaints() {
       id: 1,
       title: "AC not working",
       category: "Room Utilities",
-      description: "The air conditioner in my room has stopped working since yesterday.",
+      description:
+        "The air conditioner in my room has stopped working since yesterday.",
       status: "In Progress",
       submittedAt: "March 15, 2026 - 10:30 AM",
       image: null,
-      adminReply: "Maintenance team has been notified. They will visit your room tomorrow.",
+      adminReply:
+        "Maintenance team has been notified. They will visit your room tomorrow.",
     },
     {
       id: 2,
@@ -61,7 +83,7 @@ export default function StudentComplaints() {
       toast.error("Please fill all required fields");
       return;
     }
-    
+
     toast.success("Complaint submitted successfully");
     setCategory("");
     setDescription("");
@@ -81,13 +103,15 @@ export default function StudentComplaints() {
       <CardHeader>
         <div className="flex items-start justify-between">
           <CardTitle className="text-base">{complaint.title}</CardTitle>
-          <span className={`text-xs px-2.5 py-1 rounded-full flex-shrink-0 ${
-            complaint.status === "Resolved" 
-              ? "bg-green-100 text-green-700" 
-              : complaint.status === "In Progress"
-              ? "bg-blue-100 text-blue-700"
-              : "bg-yellow-100 text-yellow-700"
-          }`}>
+          <span
+            className={`text-xs px-2.5 py-1 rounded-full flex-shrink-0 ${
+              complaint.status === "Resolved"
+                ? "bg-green-100 text-green-700"
+                : complaint.status === "In Progress"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-yellow-100 text-yellow-700"
+            }`}
+          >
             {complaint.status}
           </span>
         </div>
@@ -95,22 +119,24 @@ export default function StudentComplaints() {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-slate-700">{complaint.description}</p>
-        
+
         <div className="flex items-center text-xs text-slate-500">
           <Clock className="w-3.5 h-3.5 mr-1.5" />
           Submitted: {complaint.submittedAt}
         </div>
-        
+
         {isResolved && complaint.resolvedAt && (
           <div className="flex items-center text-xs text-green-600">
             <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
             Resolved: {complaint.resolvedAt}
           </div>
         )}
-        
+
         {complaint.adminReply && (
           <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-            <p className="text-xs font-medium text-blue-900 mb-1">Admin Reply:</p>
+            <p className="text-xs font-medium text-blue-900 mb-1">
+              Admin Reply:
+            </p>
             <p className="text-sm text-blue-800">{complaint.adminReply}</p>
           </div>
         )}
@@ -123,9 +149,11 @@ export default function StudentComplaints() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Complaints</h1>
-          <p className="text-slate-600 mt-1">Manage and track your complaints</p>
+          <p className="text-slate-600 mt-1">
+            Manage and track your complaints
+          </p>
         </div>
-        
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -140,7 +168,7 @@ export default function StudentComplaints() {
                 Fill in the details to submit your complaint
               </DialogDescription>
             </DialogHeader>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
@@ -150,12 +178,14 @@ export default function StudentComplaints() {
                   </SelectTrigger>
                   <SelectContent className="backdrop-blur-md z-50">
                     <SelectItem value="mess">Mess</SelectItem>
-                    <SelectItem value="room-utilities">Room Utilities</SelectItem>
+                    <SelectItem value="room-utilities">
+                      Room Utilities
+                    </SelectItem>
                     <SelectItem value="common-issues">Common Issues</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="description">Description *</Label>
                 <Textarea
@@ -166,7 +196,7 @@ export default function StudentComplaints() {
                   rows={4}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="time">Time (Optional)</Label>
                 <Input
@@ -176,7 +206,7 @@ export default function StudentComplaints() {
                   onChange={(e) => setTime(e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="image">Upload Image (Optional)</Label>
                 <div className="flex items-center gap-2">
@@ -195,10 +225,16 @@ export default function StudentComplaints() {
                   <p className="text-xs text-slate-600">{imageFile.name}</p>
                 )}
               </div>
-              
+
               <div className="flex gap-2 pt-2">
-                <Button type="submit" className="flex-1">Submit Complaint</Button>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="submit" className="flex-1">
+                  Submit Complaint
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
                   Cancel
                 </Button>
               </div>
@@ -208,17 +244,32 @@ export default function StudentComplaints() {
       </div>
 
       <Tabs defaultValue="active" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="active">
+        <TabsList className="flex w-full max-w-md p-1 bg-gray-100 rounded-full">
+          <TabsTrigger
+            value="active"
+            className="flex items-center justify-center flex-1 px-4 py-2 text-sm font-medium rounded-full 
+      data-[state=active]:bg-white 
+      data-[state=active]:shadow 
+      data-[state=active]:text-black 
+      text-gray-500 transition"
+          >
             <AlertCircle className="w-4 h-4 mr-2" />
             Active ({activeComplaints.length})
           </TabsTrigger>
-          <TabsTrigger value="resolved">
+
+          <TabsTrigger
+            value="resolved"
+            className="flex items-center justify-center flex-1 px-4 py-2 text-sm font-medium rounded-full 
+      data-[state=active]:bg-white 
+      data-[state=active]:shadow 
+      data-[state=active]:text-black 
+      text-gray-500 transition"
+          >
             <CheckCircle className="w-4 h-4 mr-2" />
             Resolved ({resolvedComplaints.length})
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="active" className="mt-6 space-y-4">
           {activeComplaints.length > 0 ? (
             activeComplaints.map((complaint) => (
@@ -233,11 +284,15 @@ export default function StudentComplaints() {
             </Card>
           )}
         </TabsContent>
-        
+
         <TabsContent value="resolved" className="mt-6 space-y-4">
           {resolvedComplaints.length > 0 ? (
             resolvedComplaints.map((complaint) => (
-              <ComplaintCard key={complaint.id} complaint={complaint} isResolved />
+              <ComplaintCard
+                key={complaint.id}
+                complaint={complaint}
+                isResolved
+              />
             ))
           ) : (
             <Card className="border-slate-200">

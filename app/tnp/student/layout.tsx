@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -30,25 +30,69 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getDetails } from "@/services/student/me/getDetails";
 
-export default function StudentLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+// ✅ Type
+interface Student {
+  _id: string;
+  regdNo: string;
+  branch: string;
+  mobile: string;
+  email: string;
+  dob: string;
+  address: string;
+  profileUrl: string;
+  name: {
+    first: string;
+    middle: string;
+    last: string;
+  };
+}
+export default function StudentLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState<Student | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const res = await getDetails();
+      if (res?.success) {
+        setUser(res.data);
+      }
+    };
+    loadData();
+  }, []);
 
   // ✅ FIXED: icon as JSX (not component reference)
   const navItems: NavItem[] = [
-  { label: 'Dashboard', path: '/tnp/student/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
-  { label: 'My Profile', path: '/tnp/student/profile', icon: <User className="w-5 h-5" /> },
-  { label: 'Companies', path: '/tnp/student/companies', icon: <Building2 className="w-5 h-5" /> },
-  { label: 'Applications', path: '/tnp/student/applications', icon: <FileText className="w-5 h-5" /> },
-  { label: 'Notifications', path: '/tnp/student/notifications', icon: <Bell className="w-5 h-5" /> },
-];
+    {
+      label: "Dashboard",
+      path: "/tnp/student/dashboard",
+      icon: <LayoutDashboard className="w-5 h-5" />,
+    },
+    {
+      label: "My Profile",
+      path: "/tnp/student/profile",
+      icon: <User className="w-5 h-5" />,
+    },
+    {
+      label: "Companies",
+      path: "/tnp/student/companies",
+      icon: <Building2 className="w-5 h-5" />,
+    },
+    {
+      label: "Applications",
+      path: "/tnp/student/applications",
+      icon: <FileText className="w-5 h-5" />,
+    },
+    {
+      label: "Notifications",
+      path: "/tnp/student/notifications",
+      icon: <Bell className="w-5 h-5" />,
+    },
+  ];
 
   const handleLogout = () => {
     router.push("/");
@@ -59,9 +103,7 @@ export default function StudentLayout({
       {/* ✅ Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b border-gray-200">
-          <h1 className="text-xl font-semibold text-indigo-600">
-            CPMS
-          </h1>
+          <h1 className="text-xl font-semibold text-indigo-600">CPMS</h1>
           <p className="text-sm text-gray-500">Student Portal</p>
         </div>
 
@@ -116,9 +158,17 @@ export default function StudentLayout({
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2">
                     <Avatar className="w-8 h-8">
-                      <AvatarFallback>19</AvatarFallback>
+                      <AvatarFallback className="bg-purple-600 text-white text-sm font-semibold">
+                        {user
+                          ? `${user.name.first?.[0] || ""}${user.name.last?.[0] || ""}`
+                          : "U"}
+                      </AvatarFallback>
                     </Avatar>
-                    <span>Agrawal Chirag</span>
+                    <span>
+                      {user
+                        ? `${user.name.first} ${user.name.last}`
+                        : "Loading..."}
+                    </span>
                   </Button>
                 </DropdownMenuTrigger>
 

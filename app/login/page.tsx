@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, GraduationCap, BookOpen, Shield } from "lucide-react";
 import { Loginstudent } from "@/services/student/login";
-
 type Role = "student" | "teacher" | "admin";
 
 const roleConfig = {
@@ -64,7 +63,9 @@ export default function LoginPage() {
     try {
       if(role === "student"){
         const res = await Loginstudent({ regdNo: id, password });
-        if(res.success){
+        console.log("LOGIN RESPONSE:", res); 
+        if(res.success && res.token){
+          localStorage.setItem("token", res.token);
           setLoading(false);
           router.push(config.redirect);
         }else{

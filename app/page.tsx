@@ -8,27 +8,30 @@ const roles = [
     label: "Student",
     sub: "Grades · Attendance · Notices · Tests",
     icon: GraduationCap,
-    accent: "#3b82f6",
-    accentLight: "rgba(59,130,246,0.12)",
-    delay: "0ms",
+    accent: "#2563eb",
+    accentBg: "#eff6ff",
+    accentBorder: "#bfdbfe",
+    accentText: "#1d4ed8",
   },
   {
     key: "teacher",
     label: "Teacher",
     sub: "Students · Notices · Tests · Notes",
     icon: BookOpen,
-    accent: "#10b981",
-    accentLight: "rgba(16,185,129,0.12)",
-    delay: "80ms",
+    accent: "#059669",
+    accentBg: "#f0fdf4",
+    accentBorder: "#bbf7d0",
+    accentText: "#047857",
   },
   {
     key: "admin",
     label: "Admin",
     sub: "Courses · Faculty · Publications · Reports",
     icon: Shield,
-    accent: "#8b5cf6",
-    accentLight: "rgba(139,92,246,0.12)",
-    delay: "160ms",
+    accent: "#7c3aed",
+    accentBg: "#f5f3ff",
+    accentBorder: "#ddd6fe",
+    accentText: "#6d28d9",
   },
 ];
 
@@ -38,24 +41,20 @@ export default function Home() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=DM+Sans:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap');
 
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(16px); }
           to   { opacity: 1; transform: translateY(0); }
         }
         @keyframes fadeIn {
           from { opacity: 0; }
           to   { opacity: 1; }
         }
-        @keyframes gridScroll {
-          from { transform: translateY(0); }
-          to   { transform: translateY(60px); }
-        }
 
-        .dms-root {
+        .lp-root {
           min-height: 100vh;
-          background: #0a0e1a;
+          background: #f8fafc;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -66,242 +65,241 @@ export default function Home() {
           font-family: 'DM Sans', sans-serif;
         }
 
-        /* Subtle animated grid */
-        .dms-grid {
+        /* Soft dot grid background */
+        .lp-dots {
           position: absolute;
-          inset: -60px;
-          background-image:
-            linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
-          background-size: 60px 60px;
-          animation: gridScroll 8s linear infinite;
+          inset: 0;
+          background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+          background-size: 28px 28px;
+          opacity: 0.5;
           pointer-events: none;
         }
 
-        /* Glow orbs */
-        .dms-orb-blue {
+        /* Light color blobs */
+        .lp-blob-blue {
           position: absolute;
-          width: 500px; height: 500px;
+          width: 480px; height: 480px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%);
-          top: -120px; right: -80px;
+          background: radial-gradient(circle, #dbeafe 0%, transparent 70%);
+          top: -140px; right: -100px;
           pointer-events: none;
         }
-        .dms-orb-violet {
+        .lp-blob-violet {
           position: absolute;
-          width: 400px; height: 400px;
+          width: 360px; height: 360px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
-          bottom: -100px; left: -60px;
+          background: radial-gradient(circle, #ede9fe 0%, transparent 70%);
+          bottom: -100px; left: -80px;
           pointer-events: none;
         }
 
-        /* Top badge */
-        .dms-badge {
+        /* Badge */
+        .lp-badge {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: #fff;
+          border: 1px solid #e2e8f0;
           border-radius: 999px;
-          padding: 6px 16px;
+          padding: 5px 14px 5px 10px;
           font-size: 12px;
           font-weight: 500;
-          color: rgba(255,255,255,0.5);
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
+          color: #64748b;
+          letter-spacing: 0.04em;
           margin-bottom: 28px;
-          animation: fadeIn 0.6s ease both;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+          animation: fadeIn 0.5s ease both;
         }
-        .dms-badge-dot {
-          width: 6px; height: 6px;
+        .lp-badge-dot {
+          width: 7px; height: 7px;
           border-radius: 50%;
           background: #10b981;
-          box-shadow: 0 0 6px #10b981;
+          box-shadow: 0 0 0 2px #d1fae5;
         }
 
         /* Heading */
-        .dms-heading {
+        .lp-heading {
           font-family: 'Sora', sans-serif;
-          font-size: clamp(36px, 6vw, 64px);
+          font-size: clamp(34px, 5.5vw, 60px);
           font-weight: 700;
-          color: #fff;
+          color: #0f172a;
           text-align: center;
           line-height: 1.1;
-          letter-spacing: -0.02em;
+          letter-spacing: -0.025em;
           margin: 0 0 16px;
-          animation: fadeUp 0.6s ease 0.1s both;
+          animation: fadeUp 0.5s ease 0.08s both;
         }
-        .dms-heading span {
-          background: linear-gradient(135deg, #60a5fa 0%, #818cf8 100%);
+        .lp-heading span {
+          background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
 
-        .dms-sub {
+        .lp-sub {
           font-size: 16px;
-          color: rgba(255,255,255,0.45);
+          color: #64748b;
           text-align: center;
-          max-width: 420px;
-          line-height: 1.6;
-          margin: 0 0 56px;
-          animation: fadeUp 0.6s ease 0.18s both;
+          max-width: 400px;
+          line-height: 1.65;
+          margin: 0 0 52px;
+          animation: fadeUp 0.5s ease 0.15s both;
         }
 
-        /* Role cards */
-        .dms-cards {
+        /* Cards */
+        .lp-cards {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 16px;
           width: 100%;
-          max-width: 820px;
-          animation: fadeUp 0.6s ease 0.26s both;
+          max-width: 800px;
+          animation: fadeUp 0.5s ease 0.22s both;
         }
         @media (max-width: 640px) {
-          .dms-cards { grid-template-columns: 1fr; }
+          .lp-cards { grid-template-columns: 1fr; }
         }
 
-        .dms-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
+        .lp-card {
+          background: #fff;
+          border: 1px solid #e2e8f0;
           border-radius: 20px;
           padding: 28px 24px;
           cursor: pointer;
-          transition: all 0.22s ease;
+          transition: all 0.2s ease;
           display: flex;
           flex-direction: column;
-          gap: 0;
           position: relative;
           overflow: hidden;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.04);
         }
-        .dms-card::before {
-          content: '';
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 1px;
-          background: linear-gradient(90deg, transparent, var(--accent), transparent);
-          opacity: 0;
-          transition: opacity 0.22s ease;
+        .lp-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+          border-color: var(--card-border);
         }
-        .dms-card:hover {
-          background: rgba(255,255,255,0.07);
-          border-color: rgba(255,255,255,0.15);
-          transform: translateY(-3px);
-          box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+        .lp-card:hover .lp-card-icon-wrap {
+          background: var(--card-bg);
         }
-        .dms-card:hover::before { opacity: 1; }
-        .dms-card:hover .dms-card-arrow { opacity: 1; transform: translate(0, 0); }
-        .dms-card:hover .dms-card-icon-wrap { background: var(--accent-light); }
+        .lp-card:hover .lp-card-arrow {
+          opacity: 1;
+          transform: translate(0, 0);
+        }
 
-        .dms-card-icon-wrap {
+        .lp-card-icon-wrap {
           width: 44px; height: 44px;
           border-radius: 12px;
           display: flex; align-items: center; justify-content: center;
-          background: rgba(255,255,255,0.06);
+          background: #f1f5f9;
           margin-bottom: 18px;
-          transition: background 0.22s ease;
+          transition: background 0.2s ease;
         }
 
-        .dms-card-label {
+        .lp-card-label {
           font-family: 'Sora', sans-serif;
-          font-size: 18px;
+          font-size: 17px;
           font-weight: 600;
-          color: #fff;
+          color: #0f172a;
           margin-bottom: 8px;
         }
 
-        .dms-card-sub {
+        .lp-card-sub {
           font-size: 12px;
-          color: rgba(255,255,255,0.35);
-          line-height: 1.6;
-          letter-spacing: 0.01em;
+          color: #94a3b8;
+          line-height: 1.65;
           flex: 1;
         }
 
-        .dms-card-footer {
+        .lp-card-footer {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-top: 24px;
+          margin-top: 22px;
           padding-top: 16px;
-          border-top: 1px solid rgba(255,255,255,0.06);
+          border-top: 1px solid #f1f5f9;
         }
 
-        .dms-card-cta {
+        .lp-card-cta {
           font-size: 13px;
-          font-weight: 500;
-          color: var(--accent);
+          font-weight: 600;
+          color: var(--card-accent);
         }
 
-        .dms-card-arrow {
+        .lp-card-arrow {
           opacity: 0;
           transform: translate(-4px, 4px);
-          transition: all 0.22s ease;
-          color: var(--accent);
+          transition: all 0.2s ease;
+          color: var(--card-accent);
         }
 
         /* Footer */
-        .dms-footer {
-          margin-top: 48px;
+        .lp-footer {
+          margin-top: 44px;
           font-size: 13px;
-          color: rgba(255,255,255,0.3);
-          animation: fadeIn 0.6s ease 0.4s both;
+          color: #94a3b8;
+          animation: fadeIn 0.5s ease 0.35s both;
         }
-        .dms-footer a {
-          color: rgba(255,255,255,0.5);
+        .lp-footer a {
+          color: #64748b;
           text-decoration: none;
-          border-bottom: 1px solid rgba(255,255,255,0.2);
+          font-weight: 500;
+          border-bottom: 1px solid #e2e8f0;
           padding-bottom: 1px;
-          transition: color 0.15s;
+          transition: color 0.15s, border-color 0.15s;
         }
-        .dms-footer a:hover { color: #fff; }
+        .lp-footer a:hover {
+          color: #2563eb;
+          border-color: #bfdbfe;
+        }
       `}</style>
 
-      <div className="dms-root">
-        <div className="dms-grid" />
-        <div className="dms-orb-blue" />
-        <div className="dms-orb-violet" />
+      <div className="lp-root">
+        <div className="lp-dots" />
+        <div className="lp-blob-blue" />
+        <div className="lp-blob-violet" />
 
-        <div className="dms-badge">
-          <span className="dms-badge-dot" />
+        <div className="lp-badge">
+          <span className="lp-badge-dot" />
           Department Management System
         </div>
 
-        <h1 className="dms-heading">
-          One portal for<br />
+        <h1 className="lp-heading">
+          One portal,<br />
           <span>every role</span>
         </h1>
 
-        <p className="dms-sub">
+        <p className="lp-sub">
           Academic management made simple — for students, teachers, and administrators.
         </p>
 
-        <div className="dms-cards">
+        <div className="lp-cards">
           {roles.map((r) => {
             const Icon = r.icon;
             return (
               <div
                 key={r.key}
-                className="dms-card"
-                style={{ "--accent": r.accent, "--accent-light": r.accentLight } as React.CSSProperties}
+                className="lp-card"
+                style={{
+                  "--card-accent": r.accent,
+                  "--card-bg": r.accentBg,
+                  "--card-border": r.accentBorder,
+                } as React.CSSProperties}
                 onClick={() => router.push(`/login?role=${r.key}`)}
               >
-                <div className="dms-card-icon-wrap">
+                <div className="lp-card-icon-wrap">
                   <Icon size={20} style={{ color: r.accent }} />
                 </div>
-                <div className="dms-card-label">{r.label}</div>
-                <div className="dms-card-sub">{r.sub}</div>
-                <div className="dms-card-footer">
-                  <span className="dms-card-cta">Sign in</span>
-                  <ArrowUpRight size={16} className="dms-card-arrow" />
+                <div className="lp-card-label">{r.label}</div>
+                <div className="lp-card-sub">{r.sub}</div>
+                <div className="lp-card-footer">
+                  <span className="lp-card-cta">Sign in</span>
+                  <ArrowUpRight size={16} className="lp-card-arrow" />
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="dms-footer">
+        <div className="lp-footer">
           New here?&nbsp;
           <a href="/signup">Create a student account</a>
           &nbsp;·&nbsp;

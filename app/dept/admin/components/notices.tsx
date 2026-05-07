@@ -35,10 +35,10 @@ interface Notice {
   createdAt?: string;
 }
 
-const priorityVariant: Record<string, "destructive" | "default" | "outline"> = {
-  high: "destructive",
-  medium: "default",
-  low: "outline",
+const priorityStyle: Record<string, string> = {
+  high: "bg-red-100 text-red-700",
+  medium: "bg-blue-100 text-blue-700",
+  low: "bg-gray-100 text-gray-600",
 };
 
 const emptyForm = {
@@ -161,26 +161,32 @@ export default function AdminNotices() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} className="rounded-2xl border-0 shadow-sm">
-              <CardContent className="p-5 text-center">
-                <Skeleton className="h-8 w-12 mx-auto mb-2" />
-                <Skeleton className="h-4 w-24 mx-auto" />
-              </CardContent>
-            </Card>
+            <Skeleton key={i} className="h-24 rounded-2xl" />
           ))
         ) : (
-          [
-            { label: "Total Notices", value: notices.length, color: "text-gray-900" },
-            { label: "High Priority", value: notices.filter(n => n.priority === "high").length, color: "text-red-600" },
-            { label: "This Week", value: notices.filter(n => new Date(n.createdAt || "").getTime() > Date.now() - 7 * 86400000).length, color: "text-blue-600" },
-          ].map(item => (
-            <Card key={item.label} className="rounded-2xl border-0 shadow-sm">
-              <CardContent className="p-5 text-center">
-                <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
-                <p className="text-sm text-gray-500 mt-1">{item.label}</p>
+          <>
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-blue-600 mb-1">Total Notices</p>
+                <p className="text-3xl font-bold text-blue-700">{notices.length}</p>
+                <p className="text-xs text-blue-500 mt-1">all notices</p>
               </CardContent>
             </Card>
-          ))
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-red-50 to-rose-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-red-600 mb-1">High Priority</p>
+                <p className="text-3xl font-bold text-red-700">{notices.filter(n => n.priority === "high").length}</p>
+                <p className="text-xs text-red-500 mt-1">urgent notices</p>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-teal-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-emerald-600 mb-1">This Week</p>
+                <p className="text-3xl font-bold text-emerald-700">{notices.filter(n => new Date(n.createdAt || "").getTime() > Date.now() - 7 * 86400000).length}</p>
+                <p className="text-xs text-emerald-500 mt-1">recent notices</p>
+              </CardContent>
+            </Card>
+          </>
         )}
       </div>
 
@@ -237,7 +243,7 @@ export default function AdminNotices() {
                       {notice.priority === "high" && <AlertCircle className="size-4 text-red-500 flex-shrink-0" />}
                       {notice.priority === "medium" && <Info className="size-4 text-blue-500 flex-shrink-0" />}
                       <h3 className="font-semibold text-gray-900">{notice.title}</h3>
-                      <Badge variant={priorityVariant[notice.priority]} className="text-xs capitalize">{notice.priority}</Badge>
+                      <Badge className={`text-xs capitalize border-0 ${priorityStyle[notice.priority] ?? "bg-gray-100 text-gray-600"}`}>{notice.priority}</Badge>
                       {notice.branch && <Badge variant="outline" className="text-xs">{notice.branch}</Badge>}
                     </div>
                     <p className="text-gray-600 text-sm leading-relaxed mb-3">{notice.content}</p>

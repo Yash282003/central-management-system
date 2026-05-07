@@ -13,45 +13,13 @@ interface MessMenu {
   dinner: string;
 }
 
-const DAYS_ORDER = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
+const DAYS_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 const meals = [
-  {
-    key: "breakfast" as keyof MessMenu,
-    label: "Breakfast",
-    icon: Coffee,
-    color: "text-amber-600",
-    bg: "bg-amber-50",
-  },
-  {
-    key: "lunch" as keyof MessMenu,
-    label: "Lunch",
-    icon: Sun,
-    color: "text-orange-600",
-    bg: "bg-orange-50",
-  },
-  {
-    key: "snacks" as keyof MessMenu,
-    label: "Snacks",
-    icon: Sunset,
-    color: "text-pink-600",
-    bg: "bg-pink-50",
-  },
-  {
-    key: "dinner" as keyof MessMenu,
-    label: "Dinner",
-    icon: Moon,
-    color: "text-indigo-600",
-    bg: "bg-indigo-50",
-  },
+  { key: "breakfast" as keyof MessMenu, label: "Breakfast", icon: Coffee, color: "text-orange-600", bg: "bg-orange-50" },
+  { key: "lunch" as keyof MessMenu, label: "Lunch", icon: Sun, color: "text-emerald-600", bg: "bg-emerald-50" },
+  { key: "snacks" as keyof MessMenu, label: "Snacks", icon: Sunset, color: "text-pink-600", bg: "bg-pink-50" },
+  { key: "dinner" as keyof MessMenu, label: "Dinner", icon: Moon, color: "text-indigo-600", bg: "bg-indigo-50" },
 ];
 
 export default function MessMenuPage() {
@@ -74,31 +42,32 @@ export default function MessMenuPage() {
   }, []);
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
-
-  const sortedMenu = [...menu].sort(
-    (a, b) => DAYS_ORDER.indexOf(a.day) - DAYS_ORDER.indexOf(b.day)
-  );
+  const sortedMenu = [...menu].sort((a, b) => DAYS_ORDER.indexOf(a.day) - DAYS_ORDER.indexOf(b.day));
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-64" />
+      <div className="p-8">
+        <div className="mb-8">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="flex gap-3 mb-6">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-9 w-28 rounded-full" />)}
+        </div>
         <Skeleton className="h-96 rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Mess Menu</h1>
-        <p className="text-slate-500 mt-1">Weekly meal schedule for the hostel mess</p>
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">Mess Menu</h1>
+        <p className="text-gray-500 text-sm">Weekly meal schedule for the hostel mess</p>
       </div>
 
       {/* Meal legend */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 mb-6">
         {meals.map((m) => (
           <div
             key={m.key}
@@ -112,10 +81,10 @@ export default function MessMenuPage() {
 
       {sortedMenu.length === 0 ? (
         <Card className="rounded-2xl border-0 shadow-sm">
-          <CardContent className="py-16 text-center">
-            <Utensils className="size-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 font-medium">No menu available</p>
-            <p className="text-sm text-slate-400 mt-1">
+          <CardContent className="py-20 text-center">
+            <Utensils className="size-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 font-medium">No menu available</p>
+            <p className="text-sm text-gray-400 mt-1">
               The weekly mess menu hasn't been uploaded yet.
             </p>
           </CardContent>
@@ -128,15 +97,10 @@ export default function MessMenuPage() {
               <CardContent className="p-0">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100">
-                      <th className="text-left px-6 py-4 text-slate-500 font-medium w-32">
-                        Day
-                      </th>
+                    <tr className="border-b border-gray-100 bg-gray-50/50">
+                      <th className="text-left px-6 py-4 text-gray-500 font-medium w-36">Day</th>
                       {meals.map((m) => (
-                        <th
-                          key={m.key}
-                          className="text-left px-4 py-4 text-slate-500 font-medium"
-                        >
+                        <th key={m.key} className="text-left px-4 py-4 text-gray-500 font-medium">
                           <div className={`flex items-center gap-1.5 ${m.color}`}>
                             <m.icon className="size-4" />
                             {m.label}
@@ -151,34 +115,26 @@ export default function MessMenuPage() {
                       return (
                         <tr
                           key={idx}
-                          className={`border-b border-slate-50 last:border-0 transition-colors ${
-                            isToday
-                              ? "bg-green-50"
-                              : "hover:bg-slate-50"
+                          className={`border-b border-gray-50 last:border-0 transition-colors ${
+                            isToday ? "bg-emerald-50/60" : "hover:bg-gray-50/50"
                           }`}
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
-                              <span
-                                className={`font-semibold ${
-                                  isToday ? "text-green-700" : "text-slate-900"
-                                }`}
-                              >
+                              <span className={`font-semibold ${isToday ? "text-emerald-700" : "text-gray-900"}`}>
                                 {row.day}
                               </span>
                               {isToday && (
-                                <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
+                                <span className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded-full font-medium">
                                   Today
                                 </span>
                               )}
                             </div>
                           </td>
                           {meals.map((m) => (
-                            <td key={m.key} className="px-4 py-4 text-slate-700">
+                            <td key={m.key} className="px-4 py-4 text-gray-700">
                               {row[m.key] || (
-                                <span className="text-slate-300 italic text-xs">
-                                  Not set
-                                </span>
+                                <span className="text-gray-300 italic text-xs">Not set</span>
                               )}
                             </td>
                           ))}
@@ -198,17 +154,15 @@ export default function MessMenuPage() {
               return (
                 <Card
                   key={idx}
-                  className={`rounded-2xl border-0 shadow-sm ${
-                    isToday ? "ring-2 ring-green-500" : ""
-                  }`}
+                  className={`rounded-2xl border-0 shadow-sm ${isToday ? "ring-2 ring-emerald-500" : ""}`}
                 >
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center gap-2 text-base">
-                      <span className={isToday ? "text-green-700" : "text-slate-900"}>
+                      <span className={isToday ? "text-emerald-700" : "text-gray-900"}>
                         {row.day}
                       </span>
                       {isToday && (
-                        <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full font-normal">
+                        <span className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded-full font-normal">
                           Today
                         </span>
                       )}
@@ -221,9 +175,9 @@ export default function MessMenuPage() {
                           <m.icon className="size-3.5" />
                           <span className="text-xs font-semibold">{m.label}</span>
                         </div>
-                        <p className="text-sm text-slate-700">
+                        <p className="text-sm text-gray-700">
                           {row[m.key] || (
-                            <span className="text-slate-400 italic text-xs">Not set</span>
+                            <span className="text-gray-400 italic text-xs">Not set</span>
                           )}
                         </p>
                       </div>

@@ -1,26 +1,131 @@
 "use client"
-import { useState } from "react";
-import { BookOpen, Plus, Search, Pencil, Trash2, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { BookOpen, Plus, Search, Trash2, BookOpenCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { courses } from "../../data/mockdata";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "sonner";
+
+const BRANCHES = ["CSE", "ECE", "EEE", "ME", "CE", "IT", "MCA", "MBA"];
+
+interface Course {
+  _id: string;
+  name: string;
+  code: string;
+  credits: number;
+  branch: string;
+  semester: number;
+  teacherName: string;
+  description?: string;
+}
+
+const emptyForm = {
+  name: "",
+  code: "",
+  credits: 3,
+  branch: "",
+  semester: 1,
+  teacherName: "",
+  description: "",
+};
 
 export default function AdminCourses() {
-  const [courseList, setCourseList] = useState(courses);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [branchFilter, setBranchFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [semFilter, setSemFilter] = useState("all");
-  const [showModal, setShowModal] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
-  const semesters = [...new Set(courses.map(c => c.semester))].sort();
+  async function fetchCourses(branch?: string) {
+    setLoading(true);
+    try {
+      const url = branch && branch !== "all"
+        ? `/api/dept/courses?branch=${encodeURIComponent(branch)}`
+        : "/api/dept/courses";
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch courses");
+      const data = await res.json();
+      setCourses(data);
+    } catch {
+      toast.error("Failed to load courses");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const filtered = courseList.filter(c => {
-    const matchSearch =
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.id.toLowerCase().includes(search.toLowerCase());
-    const matchSem = semFilter === "all" || String(c.semester) === semFilter;
-    return matchSearch && matchSem;
-  });
+  useEffect(() => {
+    fetchCourses(branchFilter);
+  }, [branchFilter]);
+
+  const filtered = courses.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.code.toLowerCase().includes(search.toLowerCase())
+  );
+
+  async function handleAdd() {
+    if (!form.name.trim() || !form.code.trim() || !form.branch) {
+      toast.error("Name, code, and branch are required");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/dept/courses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error("Failed to add course");
+      toast.success("Course added successfully");
+      setOpen(false);
+      setForm(emptyForm);
+      fetchCourses(branchFilter);
+    } catch {
+      toast.error("Failed to add course");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/dept/courses?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete course");
+      toast.success("Course deleted");
+      setCourses(prev => prev.filter(c => c._id !== id));
+    } catch {
+      toast.error("Failed to delete course");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <div className="p-8">
@@ -29,139 +134,228 @@ export default function AdminCourses() {
           <h1 className="text-2xl font-semibold text-gray-900 mb-1">Course Management</h1>
           <p className="text-gray-600">Manage department courses and curriculum</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-        >
+        <Button onClick={() => setOpen(true)} className="flex items-center gap-2">
           <Plus className="size-4" />
           Add Course
-        </button>
+        </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {[
-          { label: "Total Courses", value: courseList.length },
-          { label: "Total Credits", value: courseList.reduce((a, c) => a + c.credits, 0) },
-          { label: "Total Enrolled", value: courseList.reduce((a, c) => a + c.enrolled, 0) },
-          { label: "Total Capacity", value: courseList.reduce((a, c) => a + c.capacity, 0) },
-        ].map(item => (
-          <Card key={item.label}>
-            <CardContent className="p-5 text-center">
-              <p className="text-2xl font-bold text-gray-900">{item.value}</p>
-              <p className="text-sm text-gray-500 mt-1">{item.label}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="rounded-2xl border-0 shadow-sm">
+              <CardContent className="p-5 text-center">
+                <Skeleton className="h-8 w-12 mx-auto mb-2" />
+                <Skeleton className="h-4 w-24 mx-auto" />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          [
+            { label: "Total Courses", value: courses.length },
+            { label: "Total Credits", value: courses.reduce((a, c) => a + (c.credits || 0), 0) },
+            { label: "Branches Covered", value: new Set(courses.map(c => c.branch)).size },
+          ].map(item => (
+            <Card key={item.label} className="rounded-2xl border-0 shadow-sm">
+              <CardContent className="p-5 text-center">
+                <p className="text-2xl font-bold text-gray-900">{item.value}</p>
+                <p className="text-sm text-gray-500 mt-1">{item.label}</p>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-4 mb-6 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search courses..."
+          <Input
+            placeholder="Search by name or code..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 h-10 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className="pl-10 rounded-xl border-gray-200"
           />
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setSemFilter("all")} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${semFilter === "all" ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"}`}>All Semesters</button>
-          {semesters.map(s => (
-            <button key={s} onClick={() => setSemFilter(String(s))} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${semFilter === String(s) ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"}`}>Sem {s}</button>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setBranchFilter("all")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${branchFilter === "all" ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"}`}
+          >
+            All Branches
+          </button>
+          {BRANCHES.map(b => (
+            <button
+              key={b}
+              onClick={() => setBranchFilter(b)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${branchFilter === b ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"}`}
+            >
+              {b}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Course Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filtered.map(course => {
-          const fillPct = Math.round((course.enrolled / course.capacity) * 100);
-          return (
-            <Card key={course.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="size-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                    <BookOpen className="size-5 text-blue-600" />
-                  </div>
-                  <div className="flex gap-1">
-                    <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                      <Pencil className="size-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setCourseList(prev => prev.filter(c => c.id !== course.id))}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  </div>
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-1">{course.name}</h3>
-                <div className="flex items-center gap-2 mb-4">
-                  <Badge variant="outline" className="text-xs">{course.id}</Badge>
-                  <Badge variant="outline" className="text-xs">Sem {course.semester}</Badge>
-                  <Badge variant="outline" className="text-xs">{course.credits} cr</Badge>
-                </div>
-                <p className="text-sm text-gray-500 mb-3">{course.instructor}</p>
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                      <Users className="size-3" />
-                      <span>Enrollment</span>
-                    </div>
-                    <span className="text-xs font-medium text-gray-900">{course.enrolled}/{course.capacity}</span>
-                  </div>
-                  <Progress value={fillPct} className="h-1.5" />
-                  <p className="text-xs text-gray-400 mt-1">{fillPct}% filled</p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {/* Table */}
+      <Card className="rounded-2xl border-0 shadow-sm">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold text-gray-600">Course</TableHead>
+                <TableHead className="font-semibold text-gray-600">Code</TableHead>
+                <TableHead className="font-semibold text-gray-600">Branch</TableHead>
+                <TableHead className="font-semibold text-gray-600">Semester</TableHead>
+                <TableHead className="font-semibold text-gray-600">Credits</TableHead>
+                <TableHead className="font-semibold text-gray-600">Teacher</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    {Array.from({ length: 7 }).map((_, j) => (
+                      <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-16 text-center">
+                    <BookOpenCheck className="size-10 mx-auto mb-3 text-gray-300" />
+                    <p className="text-gray-500 font-medium">No courses found</p>
+                    <p className="text-gray-400 text-sm mt-1">Try adjusting your filters or add a new course</p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtered.map(course => (
+                  <TableRow key={course._id} className="hover:bg-gray-50 transition-colors">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="size-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <BookOpen className="size-4 text-blue-600" />
+                        </div>
+                        <span className="font-medium text-gray-900 text-sm">{course.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-mono text-xs">{course.code}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="text-xs">{course.branch}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-700">Sem {course.semester}</TableCell>
+                    <TableCell className="text-sm text-gray-700">{course.credits} cr</TableCell>
+                    <TableCell className="text-sm text-gray-600">{course.teacherName || "—"}</TableCell>
+                    <TableCell>
+                      <button
+                        onClick={() => handleDelete(course._id)}
+                        disabled={deletingId === course._id}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
 
-      {/* Add Course Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Add New Course</h2>
-            <div className="space-y-4">
-              {[
-                { label: "Course Name", placeholder: "e.g. Advanced Algorithms" },
-                { label: "Course Code", placeholder: "e.g. CS401" },
-                { label: "Instructor", placeholder: "e.g. Dr. Emily Carter" },
-              ].map(field => (
-                <div key={field.label}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
-                  <input type="text" placeholder={field.placeholder} className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500" />
-                </div>
-              ))}
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Credits</label>
-                  <input type="number" defaultValue={3} className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                  <select className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500">
-                    {[1,2,3,4,5,6,7,8].map(s => <option key={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
-                  <input type="number" defaultValue={100} className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500" />
-                </div>
+      {/* Add Course Dialog */}
+      <Dialog open={open} onOpenChange={o => { setOpen(o); if (!o) setForm(emptyForm); }}>
+        <DialogContent className="max-w-lg rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Add New Course</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Course Name *</label>
+              <Input
+                placeholder="e.g. Advanced Algorithms"
+                value={form.name}
+                onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                className="rounded-xl"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Course Code *</label>
+                <Input
+                  placeholder="e.g. CS401"
+                  value={form.code}
+                  onChange={e => setForm(p => ({ ...p, code: e.target.value }))}
+                  className="rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Credits</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={6}
+                  value={form.credits}
+                  onChange={e => setForm(p => ({ ...p, credits: Number(e.target.value) }))}
+                  className="rounded-xl"
+                />
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowModal(false)} className="flex-1 h-10 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-              <button onClick={() => setShowModal(false)} className="flex-1 h-10 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Add Course</button>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Branch *</label>
+                <Select value={form.branch} onValueChange={v => setForm(p => ({ ...p, branch: v }))}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Select branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                <Select value={String(form.semester)} onValueChange={v => setForm(p => ({ ...p, semester: Number(v) }))}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1,2,3,4,5,6,7,8].map(s => <SelectItem key={s} value={String(s)}>Semester {s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Teacher Name</label>
+              <Input
+                placeholder="e.g. Dr. Emily Carter"
+                value={form.teacherName}
+                onChange={e => setForm(p => ({ ...p, teacherName: e.target.value }))}
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea
+                placeholder="Brief course description..."
+                value={form.description}
+                onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              />
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">Cancel</Button>
+            <Button onClick={handleAdd} disabled={submitting} className="rounded-xl">
+              {submitting ? "Adding..." : "Add Course"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

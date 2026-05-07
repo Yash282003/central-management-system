@@ -1,16 +1,24 @@
 "use client";
 
-import { Mail, Phone, MapPin, Calendar, Award, BookOpen } from "lucide-react";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  BookOpen,
+  Hash,
+  Loader2,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
-import { getDetails } from "@/services/student/me/getDetails";
+import { toast } from "sonner";
 
-// ✅ Type for API response
 interface Student {
   _id: string;
   regdNo: string;
@@ -29,46 +37,129 @@ interface Student {
 
 export default function StudentProfile() {
   const [user, setUser] = useState<Student | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Editable fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [address, setAddress] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
-      const res = await getDetails();
-      console.log(res);
-
-      if (res?.success) {
-        setUser(res.data);
+      try {
+        const res = await fetch("/api/student/me");
+        const json = await res.json();
+        const data: Student = json?.data ?? json;
+        if (data) {
+          setUser(data);
+          setFirstName(data.name?.first ?? "");
+          setLastName(data.name?.last ?? "");
+          setMobile(data.mobile ?? "");
+          setAddress(data.address ?? "");
+        }
+      } catch {
+        toast.error("Failed to load profile data");
+      } finally {
+        setLoading(false);
       }
     };
     loadData();
   }, []);
 
-  // ✅ Loading state
-  if (!user) {
-    return <div className="p-8">Loading...</div>;
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setSaving(true);
+    try {
+      const res = await fetch("/api/student/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          name: { first: firstName, last: lastName },
+          mobile,
+          address,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Save failed");
+
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              name: { ...prev.name, first: firstName, last: lastName },
+              mobile,
+              address,
+            }
+          : prev
+      );
+      toast.success("Profile updated successfully");
+    } catch {
+      toast.error("Failed to save changes. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <Skeleton className="h-8 w-40 mb-2" />
+        <Skeleton className="h-4 w-64 mb-8" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
+            <Skeleton className="h-72 rounded-2xl" />
+            <Skeleton className="h-40 rounded-2xl" />
+          </div>
+          <div className="lg:col-span-2">
+            <Skeleton className="h-96 rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  const fullName = `${user.name.first} ${user.name.middle} ${user.name.last}`.trim();
+  if (!user) {
+    return (
+      <div className="p-8 text-center text-slate-500">
+        Unable to load profile. Please refresh.
+      </div>
+    );
+  }
+
+  const fullName =
+    `${user.name.first} ${user.name.middle ?? ""} ${user.name.last}`.replace(
+      /\s+/g,
+      " "
+    ).trim();
+
+  const initials =
+    `${user.name.first?.charAt(0) ?? ""}${user.name.last?.charAt(0) ?? ""}`.toUpperCase();
 
   return (
     <div className="p-8">
-      {/* Header */}
+      {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">My Profile</h1>
-        <p className="text-gray-600">
-          Manage your personal information and settings
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">My Profile</h1>
+        <p className="text-gray-500">
+          Manage your personal information
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* LEFT COLUMN */}
+        {/* ── LEFT COLUMN ── */}
         <div className="space-y-6">
-          {/* Profile Card */}
-          <Card>
+          {/* Avatar + name card */}
+          <Card className="rounded-2xl border-0 shadow-sm">
             <CardContent className="p-6">
               <div className="flex flex-col items-center text-center">
                 <Avatar className="size-24 mb-4">
-                  <AvatarFallback className="bg-blue-600 text-white text-2xl">
-                    {user.name.first?.charAt(0)}
+                  <AvatarFallback className="bg-blue-600 text-white text-2xl font-semibold">
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
 
@@ -76,171 +167,199 @@ export default function StudentProfile() {
                   {fullName}
                 </h3>
 
-                <p className="text-sm text-gray-600 mb-1">
-                  {user.regdNo}
-                </p>
+                <p className="text-sm text-gray-500 mb-2">{user.regdNo}</p>
 
-                <Badge variant="outline" className="mb-4">
+                <Badge variant="outline" className="mb-4 text-blue-700 border-blue-200 bg-blue-50">
                   Student
                 </Badge>
-
-                <Button variant="outline" className="w-full mb-2">
-                  Change Photo
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  Remove Photo
-                </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Academic Info */}
-          <Card>
+          {/* Non-editable academic info */}
+          <Card className="rounded-2xl border-0 shadow-sm">
             <CardHeader>
               <CardTitle className="text-base">Academic Info</CardTitle>
             </CardHeader>
-
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="size-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                <div className="size-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
                   <BookOpen className="size-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600">Department</p>
+                  <p className="text-xs text-gray-500">Branch</p>
+                  <p className="font-medium text-gray-900">{user.branch}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="size-10 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Hash className="size-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Registration No.</p>
+                  <p className="font-medium text-gray-900">{user.regdNo}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="size-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Calendar className="size-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Date of Birth</p>
                   <p className="font-medium text-gray-900">
-                    {user.branch}
+                    {user.dob
+                      ? new Date(user.dob).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })
+                      : "—"}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="size-10 bg-green-50 rounded-lg flex items-center justify-center">
-                  <Calendar className="size-5 text-green-600" />
+                <div className="size-10 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Mail className="size-5 text-orange-600" />
                 </div>
-                <div>
-                  <p className="text-xs text-gray-600">Date of Birth</p>
-                  <p className="font-medium text-gray-900">
-                    {user.dob.split("T")[0]}
-                  </p>
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-500">Email</p>
+                  <p className="font-medium text-gray-900 truncate">{user.email}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* RIGHT COLUMN */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Personal Info */}
-          <Card>
+        {/* ── RIGHT COLUMN ── */}
+        <div className="lg:col-span-2">
+          <Card className="rounded-2xl border-0 shadow-sm">
             <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
+              <CardTitle>Edit Personal Information</CardTitle>
+              <p className="text-sm text-gray-500 mt-1">
+                Fields marked with * can be updated. Other fields are managed by admin.
+              </p>
             </CardHeader>
-
             <CardContent>
-              <form className="space-y-4">
-                {/* Name */}
+              <form onSubmit={handleSave} className="space-y-5">
+                {/* Editable: name */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>First Name</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="firstName">First Name *</Label>
                     <Input
-                      defaultValue={user.name.first}
-                      className="mt-1.5"
+                      id="firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="First name"
+                      className="rounded-xl"
                     />
                   </div>
-
-                  <div>
-                    <Label>Last Name</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="lastName">Last Name *</Label>
                     <Input
-                      defaultValue={user.name.last}
-                      className="mt-1.5"
-                    />
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div>
-                  <Label>Email</Label>
-                  <div className="relative mt-1.5">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-                    <Input
-                      type="email"
-                      defaultValue={user.email}
-                      className="pl-10"
+                      id="lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Last name"
+                      className="rounded-xl"
                     />
                   </div>
                 </div>
 
-                {/* Phone */}
-                <div>
-                  <Label>Phone</Label>
-                  <div className="relative mt-1.5">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-                    <Input
-                      type="tel"
-                      defaultValue={user.mobile}
-                      className="pl-10"
-                    />
-                  </div>
+                {/* Non-editable: email */}
+                <div className="space-y-1.5">
+                  <Label className="flex items-center gap-1 text-gray-500">
+                    <Mail className="size-3.5" />
+                    Email
+                    <span className="text-xs text-gray-400 font-normal ml-1">
+                      (read-only)
+                    </span>
+                  </Label>
+                  <Input
+                    value={user.email}
+                    disabled
+                    className="rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed"
+                  />
                 </div>
 
-                {/* Address */}
-                <div>
-                  <Label>Address</Label>
-                  <div className="relative mt-1.5">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-                    <Input
-                      defaultValue={user.address}
-                      className="pl-10"
-                    />
-                  </div>
+                {/* Editable: mobile */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="mobile" className="flex items-center gap-1">
+                    <Phone className="size-3.5" />
+                    Mobile *
+                  </Label>
+                  <Input
+                    id="mobile"
+                    type="tel"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    placeholder="Mobile number"
+                    className="rounded-xl"
+                  />
                 </div>
 
-                {/* DOB + ID */}
+                {/* Editable: address */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="address" className="flex items-center gap-1">
+                    <MapPin className="size-3.5" />
+                    Address *
+                  </Label>
+                  <Input
+                    id="address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Residential address"
+                    className="rounded-xl"
+                  />
+                </div>
+
+                {/* Non-editable: regd + dob */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Date of Birth</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-gray-500">
+                      Registration No.{" "}
+                      <span className="text-xs text-gray-400 font-normal">
+                        (read-only)
+                      </span>
+                    </Label>
                     <Input
-                      type="date"
-                      defaultValue={user.dob.split("T")[0]}
-                      className="mt-1.5"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Student ID</Label>
-                    <Input
-                      defaultValue={user.regdNo}
+                      value={user.regdNo}
                       disabled
-                      className="mt-1.5 bg-gray-50"
+                      className="rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-gray-500">
+                      Branch{" "}
+                      <span className="text-xs text-gray-400 font-normal">
+                        (read-only)
+                      </span>
+                    </Label>
+                    <Input
+                      value={user.branch}
+                      disabled
+                      className="rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed"
                     />
                   </div>
                 </div>
 
-                <div className="pt-4">
-                  <Button type="submit">Save Changes</Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Security */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <form className="space-y-4">
-                <Input type="password" placeholder="Current Password" />
-                <Input type="password" placeholder="New Password" />
-                <Input type="password" placeholder="Confirm Password" />
-
-                <div className="pt-4">
-                  <Button variant="outline">Update Password</Button>
+                <div className="pt-2">
+                  <Button
+                    type="submit"
+                    disabled={saving}
+                    className="rounded-xl px-6"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="size-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
                 </div>
               </form>
             </CardContent>

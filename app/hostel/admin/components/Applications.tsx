@@ -1,227 +1,96 @@
-"use client"
-import { useState } from "react";
-import { FileText, Calendar, Home, LogOut, CheckCircle, XCircle, Eye } from "lucide-react";
-import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+"use client";
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { FileText, CheckCircle, XCircle } from "lucide-react";
+import { toast } from "sonner";
+
+interface Application {
+  _id: string;
+  studentName: string;
+  studentRegdNo: string;
+  roomType: string;
+  reason: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+}
+
+const statusColor = (s: string) => {
+  if (s === "pending") return "bg-amber-100 text-amber-700";
+  if (s === "approved") return "bg-emerald-100 text-emerald-700";
+  return "bg-red-100 text-red-700";
+};
 
 export default function AdminApplications() {
-  const leaveApplications = [
-    {
-      id: 1,
-      studentName: "Rahul Sharma",
-      regNo: "21BCE1234",
-      room: "A-204",
-      reason: "Family function - Sister's wedding",
-      leaveDate: "March 22, 2026",
-      returnDate: "March 24, 2026",
-      destination: "Delhi",
-      status: "Pending",
-      submittedAt: "March 17, 2026",
-    },
-    {
-      id: 2,
-      studentName: "Priya Singh",
-      regNo: "21BCE1245",
-      room: "B-305",
-      reason: "Medical emergency at home",
-      leaveDate: "March 20, 2026",
-      returnDate: "March 23, 2026",
-      destination: "Mumbai",
-      status: "Pending",
-      submittedAt: "March 17, 2026",
-    },
-  ];
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const roomChangeApplications = [
-    {
-      id: 1,
-      studentName: "Amit Patel",
-      regNo: "21BCE1256",
-      room: "C-102",
-      reason: "AC not working frequently, maintenance issues",
-      status: "Pending",
-      submittedAt: "March 16, 2026",
-    },
-  ];
-
-  const withdrawalApplications = [
-    {
-      id: 1,
-      studentName: "Suresh Kumar",
-      regNo: "21BCE1267",
-      room: "D-201",
-      reason: "Moving to off-campus accommodation",
-      details: "Family shifting to nearby area, will stay with them",
-      status: "Pending",
-      submittedAt: "March 15, 2026",
-    },
-  ];
-
-  const handleAccept = (type: string, id: number) => {
-    toast.success(`${type} application approved`);
+  const fetchData = async () => {
+    const res = await fetch("/api/hostel/admin/applications");
+    const data = await res.json();
+    if (data.success) setApplications(data.data);
+    setLoading(false);
   };
 
-  const handleReject = (type: string, id: number) => {
-    toast.success(`${type} application rejected`);
+  useEffect(() => { fetchData(); }, []);
+
+  const updateStatus = async (id: string, status: string) => {
+    const res = await fetch(`/api/hostel/admin/applications?id=${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    const data = await res.json();
+    if (data.success) { toast.success(`Application ${status}`); fetchData(); }
+    else toast.error("Failed to update");
   };
-
-  const handleReview = (type: string, id: number) => {
-    toast.info(`Reviewing ${type} application`);
-  };
-
-  const ApplicationCard = ({ application, type }: any) => (
-    <Card className="border-slate-200">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-base">{application.studentName}</CardTitle>
-            <div className="flex items-center gap-3 mt-1 text-sm text-slate-600">
-              <span>{application.regNo}</span>
-              <span>Room: {application.room}</span>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">Submitted: {application.submittedAt}</p>
-          </div>
-          <span className={`text-xs px-2.5 py-1 rounded-full ${
-            application.status === "Approved"
-              ? "bg-green-100 text-green-700"
-              : application.status === "Rejected"
-              ? "bg-red-100 text-red-700"
-              : "bg-yellow-100 text-yellow-700"
-          }`}>
-            {application.status}
-          </span>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <p className="text-sm font-medium text-slate-900 mb-1">Reason:</p>
-          <p className="text-sm text-slate-700">{application.reason}</p>
-        </div>
-
-        {type === "leave" && (
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p className="text-slate-600">Leave Date</p>
-              <p className="font-medium text-slate-900">{application.leaveDate}</p>
-            </div>
-            <div>
-              <p className="text-slate-600">Return Date</p>
-              <p className="font-medium text-slate-900">{application.returnDate}</p>
-            </div>
-            <div>
-              <p className="text-slate-600">Destination</p>
-              <p className="font-medium text-slate-900">{application.destination}</p>
-            </div>
-          </div>
-        )}
-
-        {type === "withdrawal" && application.details && (
-          <div>
-            <p className="text-sm font-medium text-slate-900 mb-1">Additional Details:</p>
-            <p className="text-sm text-slate-700">{application.details}</p>
-          </div>
-        )}
-
-        {application.status === "Pending" && (
-          <div className="flex gap-2 pt-2">
-            <Button 
-              size="sm" 
-              onClick={() => handleAccept(type, application.id)}
-              className="flex-1 bg-green-600 hover:bg-green-700"
-            >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Accept
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => handleReject(type, application.id)}
-              className="flex-1 text-red-600 hover:text-red-700"
-            >
-              <XCircle className="w-4 h-4 mr-2" />
-              Reject
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => handleReview(type, application.id)}
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              Review
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Application Management</h1>
-        <p className="text-slate-600 mt-1">Review and process student applications</p>
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">Room Applications</h1>
+        <p className="text-gray-500 text-sm">Review and manage student room requests</p>
       </div>
-
-      <Tabs defaultValue="leave" className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-3">
-          <TabsTrigger value="leave">
-            <Calendar className="w-4 h-4 mr-2" />
-            Leave ({leaveApplications.length})
-          </TabsTrigger>
-          <TabsTrigger value="room-change">
-            <Home className="w-4 h-4 mr-2" />
-            Room Change ({roomChangeApplications.length})
-          </TabsTrigger>
-          <TabsTrigger value="withdrawal">
-            <LogOut className="w-4 h-4 mr-2" />
-            Withdrawal ({withdrawalApplications.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="leave" className="mt-6 space-y-4">
-          {leaveApplications.map((application) => (
-            <ApplicationCard key={application.id} application={application} type="leave" />
-          ))}
-          {leaveApplications.length === 0 && (
-            <Card className="border-slate-200">
-              <CardContent className="text-center py-12">
-                <FileText className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-                <p className="text-slate-600">No leave applications</p>
+      {loading ? (
+        <div className="space-y-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}</div>
+      ) : applications.length === 0 ? (
+        <div className="py-20 text-center"><FileText className="size-10 text-gray-300 mx-auto mb-3" /><p className="text-gray-500">No applications yet</p></div>
+      ) : (
+        <div className="space-y-4">
+          {applications.map(a => (
+            <Card key={a._id} className="rounded-2xl border-0 shadow-sm">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="font-semibold text-gray-900">{a.studentName}</p>
+                      <span className="text-xs text-gray-400">{a.studentRegdNo}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-1 capitalize">Room type: <strong>{a.roomType}</strong></p>
+                    {a.reason && <p className="text-sm text-gray-500">{a.reason}</p>}
+                    <p className="text-xs text-gray-400 mt-2">{new Date(a.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <Badge className={`capitalize text-xs ${statusColor(a.status)}`}>{a.status}</Badge>
+                    {a.status === "pending" && (
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => updateStatus(a._id, "approved")} className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 text-xs rounded-xl">
+                          <CheckCircle className="size-3 mr-1" /> Approve
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => updateStatus(a._id, "rejected")} className="border-red-200 text-red-600 hover:bg-red-50 h-8 text-xs rounded-xl">
+                          <XCircle className="size-3 mr-1" /> Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="room-change" className="mt-6 space-y-4">
-          {roomChangeApplications.map((application) => (
-            <ApplicationCard key={application.id} application={application} type="room change" />
           ))}
-          {roomChangeApplications.length === 0 && (
-            <Card className="border-slate-200">
-              <CardContent className="text-center py-12">
-                <FileText className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-                <p className="text-slate-600">No room change applications</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="withdrawal" className="mt-6 space-y-4">
-          {withdrawalApplications.map((application) => (
-            <ApplicationCard key={application.id} application={application} type="withdrawal" />
-          ))}
-          {withdrawalApplications.length === 0 && (
-            <Card className="border-slate-200">
-              <CardContent className="text-center py-12">
-                <FileText className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-                <p className="text-slate-600">No withdrawal applications</p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
     </div>
   );
 }

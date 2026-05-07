@@ -1,128 +1,97 @@
-"use client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, MessageSquare, FileText, TrendingUp } from "lucide-react";
+"use client";
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Users, MessageSquare, FileText, AlertTriangle, Clock } from "lucide-react";
+
+interface Stats {
+  totalStudents: number;
+  pendingApps: number;
+  openComplaints: number;
+  lowStock: number;
+  recentApplications: { studentName: string; roomType: string; status: string; createdAt: string }[];
+  recentComplaints: { studentName: string; category: string; status: string; createdAt: string }[];
+}
+
+const statusColor = (s: string) => {
+  if (s === "pending" || s === "open") return "bg-amber-100 text-amber-700";
+  if (s === "approved" || s === "resolved") return "bg-emerald-100 text-emerald-700";
+  if (s === "rejected") return "bg-red-100 text-red-700";
+  return "bg-blue-100 text-blue-700";
+};
 
 export default function AdminDashboard() {
-  const stats = [
-    {
-      title: "Total Students",
-      value: "245",
-      change: "+12 this month",
-      icon: Users,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
-    },
-    {
-      title: "Active Complaints",
-      value: "18",
-      change: "-5 from last week",
-      icon: MessageSquare,
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-100",
-    },
-    {
-      title: "Pending Applications",
-      value: "32",
-      change: "+8 today",
-      icon: FileText,
-      color: "text-purple-600",
-      bgColor: "bg-purple-100",
-    },
-    {
-      title: "Room Occupancy",
-      value: "92%",
-      change: "245/266 rooms",
-      icon: TrendingUp,
-      color: "text-green-600",
-      bgColor: "bg-green-100",
-    },
-  ];
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const recentActivities = [
-    { id: 1, type: "complaint", message: "New complaint from Room A-204", time: "5 min ago" },
-    { id: 2, type: "application", message: "Leave application approved for 21BCE1234", time: "15 min ago" },
-    { id: 3, type: "student", message: "New student assigned to Room B-105", time: "1 hour ago" },
-    { id: 4, type: "complaint", message: "Complaint resolved: AC repair in C-301", time: "2 hours ago" },
-  ];
+  useEffect(() => {
+    fetch("/api/hostel/admin/dashboard")
+      .then(r => r.json())
+      .then(d => { if (d.success) setStats(d.data); })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const statCards = stats ? [
+    { label: "Total Students", value: stats.totalStudents, icon: Users, color: "text-blue-600", bg: "from-blue-50 to-indigo-50" },
+    { label: "Pending Applications", value: stats.pendingApps, icon: FileText, color: "text-amber-600", bg: "from-amber-50 to-orange-50" },
+    { label: "Open Complaints", value: stats.openComplaints, icon: MessageSquare, color: "text-red-600", bg: "from-red-50 to-rose-50" },
+    { label: "Low Stock Items", value: stats.lowStock, icon: AlertTriangle, color: "text-violet-600", bg: "from-violet-50 to-purple-50" },
+  ] : [];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Admin Dashboard</h1>
-        <p className="text-slate-600 mt-1">Ganga Hostel - Warden Portal</p>
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">Hostel Dashboard</h1>
+        <p className="text-gray-500 text-sm">Overview of hostel operations</p>
       </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <Card key={stat.title} className="border-slate-200">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">
-                {stat.title}
-              </CardTitle>
-              <div className={`w-10 h-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
-                <stat.icon className={`w-5 h-5 ${stat.color}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-semibold text-slate-900">{stat.value}</div>
-              <p className="text-xs text-slate-500 mt-1">{stat.change}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)
+          : statCards.map((s) => (
+            <Card key={s.label} className={`rounded-2xl border-0 shadow-sm bg-gradient-to-br ${s.bg}`}>
+              <CardContent className="p-5 flex items-center justify-between">
+                <div>
+                  <p className={`text-xs font-medium ${s.color} mb-1`}>{s.label}</p>
+                  <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
+                </div>
+                <s.icon className={`size-8 ${s.color} opacity-60`} />
+              </CardContent>
+            </Card>
+          ))
+        }
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activities */}
-        <Card className="border-slate-200">
-          <CardHeader>
-            <CardTitle>Recent Activities</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 pb-3 border-b border-slate-100 last:border-0 last:pb-0">
-                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                    activity.type === "complaint" ? "bg-yellow-500" : 
-                    activity.type === "application" ? "bg-purple-500" : 
-                    "bg-blue-500"
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-900">{activity.message}</p>
-                    <p className="text-xs text-slate-500 mt-1">{activity.time}</p>
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardContent className="p-5">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2"><Clock className="size-4 text-gray-400" /> Recent Applications</h3>
+            {loading ? <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 rounded-xl" />)}</div>
+              : !stats?.recentApplications.length ? <p className="text-sm text-gray-400 text-center py-6">No applications yet</p>
+              : stats.recentApplications.map((a, i) => (
+                <div key={i} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{a.studentName}</p>
+                    <p className="text-xs text-gray-400 capitalize">{a.roomType} room</p>
                   </div>
+                  <Badge className={`text-xs capitalize ${statusColor(a.status)}`}>{a.status}</Badge>
                 </div>
               ))}
-            </div>
           </CardContent>
         </Card>
-
-        {/* Quick Stats */}
-        <Card className="border-slate-200">
-          <CardHeader>
-            <CardTitle>Quick Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-slate-600">Students on Leave</span>
-              <span className="text-sm font-semibold text-slate-900">12</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-slate-600">Pending Fines</span>
-              <span className="text-sm font-semibold text-slate-900">₹15,600</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-slate-600">Mess Attendance (Today)</span>
-              <span className="text-sm font-semibold text-slate-900">89%</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-slate-600">Active Polls</span>
-              <span className="text-sm font-semibold text-slate-900">2</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-slate-600">Workers Present</span>
-              <span className="text-sm font-semibold text-slate-900">18/20</span>
-            </div>
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardContent className="p-5">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2"><MessageSquare className="size-4 text-gray-400" /> Recent Complaints</h3>
+            {loading ? <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 rounded-xl" />)}</div>
+              : !stats?.recentComplaints.length ? <p className="text-sm text-gray-400 text-center py-6">No complaints yet</p>
+              : stats.recentComplaints.map((c, i) => (
+                <div key={i} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{c.studentName}</p>
+                    <p className="text-xs text-gray-400 capitalize">{c.category}</p>
+                  </div>
+                  <Badge className={`text-xs capitalize ${statusColor(c.status)}`}>{c.status}</Badge>
+                </div>
+              ))}
           </CardContent>
         </Card>
       </div>

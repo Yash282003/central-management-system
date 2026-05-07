@@ -1,8 +1,12 @@
-"use client"
+"use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, GraduationCap, BookOpen, Shield } from "lucide-react";
 import { Loginstudent } from "@/services/student/login";
+import { Loginteacher } from "@/services/teacher/login";
+import { Loginadmin } from "@/services/admin/login";
+import { toast } from "sonner";
+
 type Role = "student" | "teacher" | "admin";
 
 const roleConfig = {
@@ -10,34 +14,40 @@ const roleConfig = {
     icon: <GraduationCap className="size-6" />,
     label: "Student",
     description: "Access your grades, attendance & courses",
-    placeholder: { id: "e.g. CS2021001", password: "student123" },
+    idLabel: "Registration No.",
+    placeholder: { id: "e.g. CS2021001", password: "••••••••" },
     redirect: "/dept/student/dashboard",
     color: "text-blue-600",
     bg: "bg-blue-50",
     border: "border-blue-200",
     activeBg: "bg-blue-600",
+    ring: "focus:ring-blue-500/20 focus:border-blue-500",
   },
   teacher: {
     icon: <BookOpen className="size-6" />,
     label: "Teacher",
     description: "Manage students, notices & courses",
-    placeholder: { id: "e.g. TCH001", password: "teacher123" },
+    idLabel: "Email Address",
+    placeholder: { id: "teacher@university.edu", password: "••••••••" },
     redirect: "/dept/teacher/dashboard",
-    color: "text-green-600",
-    bg: "bg-green-50",
-    border: "border-green-200",
-    activeBg: "bg-green-600",
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    border: "border-emerald-200",
+    activeBg: "bg-emerald-600",
+    ring: "focus:ring-emerald-500/20 focus:border-emerald-500",
   },
   admin: {
     icon: <Shield className="size-6" />,
     label: "Admin",
     description: "Full department management access",
-    placeholder: { id: "e.g. ADM001", password: "admin123" },
+    idLabel: "Email Address",
+    placeholder: { id: "admin@university.edu", password: "••••••••" },
     redirect: "/dept/admin/dashboard",
-    color: "text-purple-600",
-    bg: "bg-purple-50",
-    border: "border-purple-200",
-    activeBg: "bg-purple-600",
+    color: "text-violet-600",
+    bg: "bg-violet-50",
+    border: "border-violet-200",
+    activeBg: "bg-violet-600",
+    ring: "focus:ring-violet-500/20 focus:border-violet-500",
   },
 } as const;
 
@@ -55,38 +65,44 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id.trim() || !password.trim()) {
-      setError("Please enter your ID and password.");
+      setError("Please enter your credentials.");
       return;
     }
     setError("");
     setLoading(true);
+
     try {
-      if(role === "student"){
-        const res = await Loginstudent({ regdNo: id, password });
-        console.log("LOGIN RESPONSE:", res); 
-        if(res.success && res.token){
-          localStorage.setItem("token", res.token);
-          setLoading(false);
-          router.push(config.redirect);
-        }else{
-          setError(res.message);
-        }
+      let res;
+
+      if (role === "student") {
+        res = await Loginstudent({ regdNo: id, password });
+      } else if (role === "teacher") {
+        res = await Loginteacher({ email: id, password });
+      } else {
+        res = await Loginadmin({ email: id, password });
       }
-    }catch(error){
-      console.log(error);
+
+      if (res?.success) {
+        toast.success(`Welcome back!`);
+        router.push(config.redirect);
+      } else {
+        setError(res?.message || "Login failed. Please try again.");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 flex items-center justify-center p-4">
-      {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 size-[500px] rounded-full bg-blue-100/40 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 size-[500px] rounded-full bg-indigo-100/40 blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-md">
-        {/* Header */}
+      <div className="relative w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="text-center mb-8">
           <div className="size-14 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
             <span className="text-white font-bold text-lg">DMS</span>
@@ -95,19 +111,17 @@ export default function LoginPage() {
           <p className="text-gray-500 text-sm">Sign in to your account</p>
         </div>
 
-        {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/80 border border-gray-100 overflow-hidden">
-          {/* Role Selector */}
           <div className="p-6 pb-0">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Select Role</p>
             <div className="grid grid-cols-3 gap-2">
-              {(Object.keys(roleConfig) as Role[]).map(r => {
+              {(Object.keys(roleConfig) as Role[]).map((r) => {
                 const cfg = roleConfig[r];
                 const isActive = role === r;
                 return (
                   <button
                     key={r}
-                    onClick={() => { setRole(r); setError(""); }}
+                    onClick={() => { setRole(r); setError(""); setId(""); }}
                     className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${
                       isActive
                         ? `${cfg.border} ${cfg.bg} ${cfg.color}`
@@ -121,25 +135,22 @@ export default function LoginPage() {
               })}
             </div>
 
-            {/* Role description */}
             <div className={`mt-3 p-3 rounded-xl ${config.bg} ${config.border} border`}>
               <p className={`text-xs ${config.color} font-medium`}>{config.description}</p>
             </div>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleLogin} className="p-6 pt-5 space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                {config.label} ID
+                {config.idLabel}
               </label>
               <input
-                id="login-id"
                 type="text"
                 value={id}
-                onChange={e => setId(e.target.value)}
+                onChange={(e) => setId(e.target.value)}
                 placeholder={config.placeholder.id}
-                className="w-full h-11 px-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50 text-sm transition-all"
+                className={`w-full h-11 px-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 bg-gray-50 text-sm transition-all ${config.ring}`}
               />
             </div>
 
@@ -147,12 +158,11 @@ export default function LoginPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
               <div className="relative">
                 <input
-                  id="login-password"
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full h-11 px-4 pr-11 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50 text-sm transition-all"
+                  className={`w-full h-11 px-4 pr-11 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 bg-gray-50 text-sm transition-all ${config.ring}`}
                 />
                 <button
                   type="button"
@@ -170,18 +180,7 @@ export default function LoginPage() {
               </p>
             )}
 
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
-                <input type="checkbox" className="rounded border-gray-300" />
-                Remember me
-              </label>
-              <button type="button" className="text-blue-600 hover:underline font-medium">
-                Forgot password?
-              </button>
-            </div>
-
             <button
-              id="login-submit"
               type="submit"
               disabled={loading}
               className={`w-full h-11 rounded-xl font-semibold text-sm text-white transition-all duration-200 flex items-center justify-center gap-2 ${
@@ -197,6 +196,16 @@ export default function LoginPage() {
                 `Sign in as ${config.label}`
               )}
             </button>
+
+            <p className="text-center text-sm text-gray-500">
+              Don&apos;t have an account?{" "}
+              <a
+                href={role === "student" ? "/signup" : `/signup/${role}`}
+                className={`font-semibold ${config.color} hover:underline`}
+              >
+                Sign up
+              </a>
+            </p>
           </form>
         </div>
 

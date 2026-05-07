@@ -1,166 +1,120 @@
-"use client"
-import { CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+import { useState, useEffect } from "react";
+import { CheckCircle, AlertTriangle, XCircle, BookOpen } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { attendance } from "../../data/mockdata";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface AttendanceRecord {
+  _id: string;
+  courseName: string;
+  courseCode: string;
+  totalClasses: number;
+  attended: number;
+  percentage: number;
+}
+
+const getStatus = (pct: number) => {
+  if (pct >= 75) return { label: "Good", color: "text-emerald-600", bg: "bg-emerald-100", icon: CheckCircle };
+  if (pct >= 60) return { label: "Warning", color: "text-amber-600", bg: "bg-amber-100", icon: AlertTriangle };
+  return { label: "Critical", color: "text-red-600", bg: "bg-red-100", icon: XCircle };
+};
 
 export default function StudentAttendance() {
-  const averageAttendance =
-    attendance.reduce((sum, course) => sum + course.percentage, 0) / attendance.length;
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const getAttendanceStatus = (percentage: number) => {
-    if (percentage >= 90) return { color: "green", icon: CheckCircle2, label: "Excellent" };
-    if (percentage >= 75) return { color: "blue", icon: CheckCircle2, label: "Good" };
-    if (percentage >= 65) return { color: "orange", icon: AlertTriangle, label: "Warning" };
-    return { color: "red", icon: XCircle, label: "Critical" };
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const meRes = await fetch("/api/student/me");
+        const me = await meRes.json();
+        if (!me.success) return;
+
+        const res = await fetch(`/api/dept/attendance?studentId=${me.data._id}`);
+        const data = await res.json();
+        if (data.success) setRecords(data.data);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const overall = records.length
+    ? Math.round(records.reduce((s, r) => s + r.percentage, 0) / records.length)
+    : 0;
 
   return (
     <div className="p-8">
-      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Attendance Record</h1>
-        <p className="text-gray-600">Monitor your class attendance across all courses</p>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">Attendance</h1>
+        <p className="text-gray-500 text-sm">Track your attendance across all courses</p>
       </div>
 
-      {/* Summary Card */}
-      <Card className="mb-8">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="size-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                  <CheckCircle2 className="size-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Average Attendance</p>
-                  <p className="text-3xl font-semibold text-gray-900">
-                    {averageAttendance.toFixed(1)}%
-                  </p>
-                </div>
+      {loading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-24 rounded-2xl" />
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
+        </div>
+      ) : records.length === 0 ? (
+        <div className="py-20 text-center">
+          <BookOpen className="size-10 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500 font-medium">No attendance records yet</p>
+          <p className="text-gray-400 text-sm">Your teacher will update attendance regularly</p>
+        </div>
+      ) : (
+        <>
+          <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50 mb-6">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-blue-600 mb-1">Overall Attendance</p>
+                <p className="text-3xl font-bold text-blue-700">{overall}%</p>
+                <p className="text-xs text-blue-500 mt-1">across {records.length} courses</p>
               </div>
-              <Progress value={averageAttendance} className="h-3" />
-              <div className="flex items-center justify-between mt-2">
-                <p className="text-sm text-gray-600">
-                  Minimum required: <span className="font-medium">75%</span>
-                </p>
-                {averageAttendance >= 75 ? (
-                  <Badge variant="default" className="bg-green-600">
-                    Above Requirement
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">Below Requirement</Badge>
-                )}
+              <div className="size-16">
+                <svg viewBox="0 0 36 36" className="size-full -rotate-90">
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#dbeafe" strokeWidth="3" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#3b82f6" strokeWidth="3"
+                    strokeDasharray={`${overall} ${100 - overall}`} strokeLinecap="round" />
+                </svg>
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      {/* Attendance Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Course-wise Attendance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold">Course Code</TableHead>
-                  <TableHead className="font-semibold">Course Name</TableHead>
-                  <TableHead className="font-semibold text-center">Classes Attended</TableHead>
-                  <TableHead className="font-semibold text-center">Total Classes</TableHead>
-                  <TableHead className="font-semibold text-center">Percentage</TableHead>
-                  <TableHead className="font-semibold text-center">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {attendance.map((course) => {
-                  const status = getAttendanceStatus(course.percentage);
-                  const StatusIcon = status.icon;
-                  return (
-                    <TableRow key={course.id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">{course.code}</TableCell>
-                      <TableCell>{course.course}</TableCell>
-                      <TableCell className="text-center">{course.attended}</TableCell>
-                      <TableCell className="text-center">{course.total}</TableCell>
-                      <TableCell className="text-center">
-                        <div className="space-y-2">
-                          <span className="font-semibold text-gray-900">
-                            {course.percentage.toFixed(1)}%
-                          </span>
-                          <Progress value={course.percentage} className="h-2 w-24 mx-auto" />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <StatusIcon
-                            className={`size-4 ${
-                              status.color === "green"
-                                ? "text-green-600"
-                                : status.color === "blue"
-                                ? "text-blue-600"
-                                : status.color === "orange"
-                                ? "text-orange-600"
-                                : "text-red-600"
-                            }`}
-                          />
-                          <Badge
-                            variant={
-                              status.color === "green" || status.color === "blue"
-                                ? "default"
-                                : status.color === "orange"
-                                ? "outline"
-                                : "destructive"
-                            }
-                            className={
-                              status.color === "green"
-                                ? "bg-green-600"
-                                : status.color === "blue"
-                                ? "bg-blue-600"
-                                : status.color === "orange"
-                                ? "text-orange-600 border-orange-600"
-                                : ""
-                            }
-                          >
-                            {status.label}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+          <div className="space-y-3">
+            {records.map((r) => {
+              const status = getStatus(r.percentage);
+              const Icon = status.icon;
+              return (
+                <Card key={r._id} className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="font-semibold text-gray-900 text-sm">{r.courseName}</p>
+                        {r.courseCode && <p className="text-xs text-gray-400">{r.courseCode}</p>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`text-xs font-semibold ${status.bg} ${status.color}`}>
+                          <Icon className="size-3 mr-1" />{status.label}
+                        </Badge>
+                        <span className="font-bold text-gray-900">{r.percentage}%</span>
+                      </div>
+                    </div>
+                    <Progress value={r.percentage} className="h-2" />
+                    <p className="text-xs text-gray-400 mt-2">{r.attended} / {r.totalClasses} classes attended</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Important Note */}
-      <Card className="mt-6 bg-blue-50 border-blue-200">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="size-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-blue-900 mb-1">Attendance Policy</h4>
-              <p className="text-sm text-blue-800">
-                A minimum attendance of 75% is required in each course to be eligible for the final
-                examination. Students falling below this threshold may face academic penalties.
-              </p>
-            </div>
+          <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+            <p className="text-xs font-medium text-amber-700">Minimum 75% attendance required to sit for exams.</p>
           </div>
-        </CardContent>
-      </Card>
+        </>
+      )}
     </div>
   );
 }

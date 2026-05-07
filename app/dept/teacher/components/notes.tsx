@@ -1,40 +1,117 @@
 "use client"
-import { useState } from "react";
-import { Upload, Download, BookOpen, Search, FileText, Trash2, Plus } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { useState, useEffect } from "react";
+import { Upload, Download, BookOpen, Search, FileText, Trash2, Link } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { notes, courses } from "../../data/mockdata";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+
+interface Note {
+  _id: string;
+  title: string;
+  subject: string;
+  fileUrl: string;
+  branch: string;
+  downloads?: number;
+  createdAt: string;
+}
+
+interface Teacher {
+  _id: string;
+  name: { first: string; middle?: string; last: string };
+  department: string;
+}
+
+const EMPTY_FORM = { title: "", subject: "", fileUrl: "" };
 
 export default function TeacherNotes() {
-  const [noteList, setNoteList] = useState(notes);
+  const [teacher, setTeacher] = useState<Teacher | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ title: "", course: "CS301" });
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const filtered = noteList.filter(n => {
-    const matchSearch = n.title.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === "all" || n.course === filter;
-    return matchSearch && matchFilter;
-  });
+  useEffect(() => {
+    async function init() {
+      try {
+        const res = await fetch("/api/teacher/me");
+        if (!res.ok) throw new Error("Failed to load teacher info");
+        const data = await res.json();
+        setTeacher(data.data);
+        await fetchNotes(data.data.department);
+      } catch {
+        toast.error("Failed to load teacher information");
+        setLoading(false);
+      }
+    }
+    init();
+  }, []);
 
-  const handleUpload = () => {
-    if (!form.title.trim()) return;
-    setNoteList(prev => [
-      {
-        id: Date.now(),
-        title: form.title,
-        course: form.course,
-        uploadDate: new Date().toISOString().split("T")[0],
-        type: "PDF",
-        size: "1.0 MB",
-        downloads: 0,
-      },
-      ...prev
-    ]);
-    setShowModal(false);
-    setForm({ title: "", course: "CS301" });
-  };
+  async function fetchNotes(branch: string) {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/dept/notes?branch=${encodeURIComponent(branch)}`);
+      if (!res.ok) throw new Error("Failed to fetch notes");
+      const data = await res.json();
+      setNotes(data.notes ?? data);
+    } catch {
+      toast.error("Failed to load notes");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleUpload() {
+    if (!form.title.trim()) { toast.error("Title is required"); return; }
+    if (!form.subject.trim()) { toast.error("Subject is required"); return; }
+    if (!form.fileUrl.trim()) { toast.error("File URL is required"); return; }
+    if (!teacher) return;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/dept/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, branch: teacher.department }),
+      });
+      if (!res.ok) throw new Error("Failed to upload note");
+      const data = await res.json();
+      setNotes(prev => [data.note ?? data, ...prev]);
+      setShowModal(false);
+      setForm(EMPTY_FORM);
+      toast.success("Note uploaded successfully");
+    } catch {
+      toast.error("Failed to upload note");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/dept/notes?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete note");
+      setNotes(prev => prev.filter(n => n._id !== id));
+      toast.success("Note deleted");
+    } catch {
+      toast.error("Failed to delete note");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  const filtered = notes.filter(n =>
+    n.title.toLowerCase().includes(search.toLowerCase()) ||
+    n.subject.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalDownloads = notes.reduce((acc, n) => acc + (n.downloads ?? 0), 0);
+  const uniqueSubjects = new Set(notes.map(n => n.subject)).size;
 
   return (
     <div className="p-8">
@@ -52,112 +129,160 @@ export default function TeacherNotes() {
         </button>
       </div>
 
-      {/* Filters */}
+      {/* Stats Row */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="border-0 shadow-sm rounded-2xl">
+              <CardContent className="p-4 flex items-center gap-3">
+                <Skeleton className="size-10 rounded-xl flex-shrink-0" />
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-6 w-10" />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <>
+            <Card className="border-0 shadow-sm rounded-2xl">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="size-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                  <FileText className="size-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Total Notes</p>
+                  <p className="text-xl font-semibold text-gray-900">{notes.length}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-sm rounded-2xl">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="size-10 bg-green-50 rounded-xl flex items-center justify-center">
+                  <Download className="size-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Total Downloads</p>
+                  <p className="text-xl font-semibold text-gray-900">{totalDownloads}</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-sm rounded-2xl">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="size-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                  <BookOpen className="size-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Subjects Covered</p>
+                  <p className="text-xl font-semibold text-gray-900">{uniqueSubjects}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
+
+      {/* Search */}
       <div className="flex items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search notes..."
+            placeholder="Search by title or subject..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 h-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-sm"
           />
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFilter("all")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === "all" ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"}`}
-          >
-            All Courses
-          </button>
-          {courses.map(c => (
-            <button
-              key={c.id}
-              onClick={() => setFilter(c.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === c.id ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"}`}
-            >
-              {c.id}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="size-10 bg-blue-50 rounded-xl flex items-center justify-center">
-              <FileText className="size-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Total Notes</p>
-              <p className="text-xl font-semibold text-gray-900">{noteList.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="size-10 bg-green-50 rounded-xl flex items-center justify-center">
-              <Download className="size-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Total Downloads</p>
-              <p className="text-xl font-semibold text-gray-900">{noteList.reduce((acc, n) => acc + n.downloads, 0)}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="size-10 bg-purple-50 rounded-xl flex items-center justify-center">
-              <BookOpen className="size-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Courses Covered</p>
-              <p className="text-xl font-semibold text-gray-900">{new Set(noteList.map(n => n.course)).size}</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Notes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map(note => (
-          <Card key={note.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-4">
-                <div className="size-10 bg-red-50 rounded-xl flex items-center justify-center">
-                  <FileText className="size-5 text-red-500" />
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i} className="border-0 shadow-sm rounded-2xl">
+              <CardContent className="p-5 space-y-3">
+                <div className="flex items-start justify-between">
+                  <Skeleton className="size-10 rounded-xl" />
+                  <Skeleton className="size-7 rounded-lg" />
                 </div>
-                <button
-                  onClick={() => setNoteList(prev => prev.filter(n => n.id !== note.id))}
-                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1 text-sm leading-tight">{note.title}</h3>
-              <p className="text-xs text-gray-500 mb-3">{note.course}</p>
-              <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                <span>{note.uploadDate}</span>
-                <span>{note.size}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <Download className="size-3" />
-                  <span>{note.downloads} downloads</span>
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-3 w-full" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-5 w-12 rounded-full" />
                 </div>
-                <Badge variant="outline" className="text-xs">{note.type}</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-20 text-gray-400">
+          <FileText className="size-12 mx-auto mb-4 opacity-30" />
+          <p className="font-medium text-gray-500">No notes found</p>
+          <p className="text-sm mt-1">
+            {search ? "Try a different search term" : "Upload your first note to get started"}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map(note => (
+            <Card key={note._id} className="border-0 shadow-sm rounded-2xl hover:shadow-md transition-shadow">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="size-10 bg-red-50 rounded-xl flex items-center justify-center">
+                    <FileText className="size-5 text-red-500" />
+                  </div>
+                  <button
+                    onClick={() => handleDelete(note._id)}
+                    disabled={deletingId === note._id}
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1 text-sm leading-tight line-clamp-2">
+                  {note.title}
+                </h3>
+                <p className="text-xs text-gray-500 mb-3">{note.subject}</p>
+                <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                  <span>{new Date(note.createdAt).toLocaleDateString()}</span>
+                  <Badge variant="outline" className="text-xs">{note.branch}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Download className="size-3" />
+                    <span>{note.downloads ?? 0} downloads</span>
+                  </div>
+                  {note.fileUrl && (
+                    <a
+                      href={note.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                    >
+                      <Link className="size-3" />
+                      Open
+                    </a>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Upload Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+          onClick={() => { setShowModal(false); setForm(EMPTY_FORM); }}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+            onClick={e => e.stopPropagation()}
+          >
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Upload Notes</h2>
             <div className="space-y-4">
               <div>
@@ -171,27 +296,48 @@ export default function TeacherNotes() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Course</label>
-                <select
-                  value={form.course}
-                  onChange={e => setForm(p => ({ ...p, course: e.target.value }))}
-                  className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500"
-                >
-                  {courses.map(c => <option key={c.id} value={c.id}>{c.id} — {c.name}</option>)}
-                </select>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
+                <input
+                  type="text"
+                  value={form.subject}
+                  onChange={e => setForm(p => ({ ...p, subject: e.target.value }))}
+                  placeholder="e.g. Data Structures and Algorithms"
+                  className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                />
               </div>
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
-                <Upload className="size-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">Click or drag file to upload</p>
-                <p className="text-xs text-gray-400 mt-1">PDF, PPTX, DOCX up to 50MB</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">File URL *</label>
+                <input
+                  type="url"
+                  value={form.fileUrl}
+                  onChange={e => setForm(p => ({ ...p, fileUrl: e.target.value }))}
+                  placeholder="https://drive.google.com/..."
+                  className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+                <input
+                  type="text"
+                  value={teacher?.department ?? ""}
+                  readOnly
+                  className="w-full h-10 px-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-500"
+                />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowModal(false)} className="flex-1 h-10 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+              <button
+                onClick={() => { setShowModal(false); setForm(EMPTY_FORM); }}
+                className="flex-1 h-10 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
                 Cancel
               </button>
-              <button onClick={handleUpload} className="flex-1 h-10 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
-                Upload
+              <button
+                onClick={handleUpload}
+                disabled={submitting}
+                className="flex-1 h-10 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-60"
+              >
+                {submitting ? "Uploading..." : "Upload"}
               </button>
             </div>
           </div>

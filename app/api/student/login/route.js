@@ -24,16 +24,23 @@ export async function POST(request) {
     }
 
     const token = jwt.sign(
-      { _id: student._id },
+      { _id: student._id, role: "student" },
       process.env.JWT_KEY,
       { expiresIn: "1d" }
     );
-console.log(token)
-    return NextResponse.json({
+
+    const response = NextResponse.json({
       success: true,
-      token, // ✅ IMPORTANT
-      data: student,
+      data: { _id: student._id, name: student.name, email: student.email, regdNo: student.regdNo },
     });
+
+    response.cookies.set("studentToken", token, {
+      httpOnly: true,
+      maxAge: 60 * 60 * 24,
+      path: "/",
+    });
+
+    return response;
 
   } catch (error) {
     return NextResponse.json({ success: false, message: error.message });

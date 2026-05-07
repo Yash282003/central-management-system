@@ -41,8 +41,9 @@ export async function POST(request) {
 
     // ✅ Sign JWT token
     const token = jwt.sign(
-      { _id: teacher._id, name: teacher.name },
-      process.env.JWT_KEY
+      { _id: teacher._id, role: "teacher" },
+      process.env.JWT_KEY,
+      { expiresIn: "1d" }
     );
 
     const response = NextResponse.json({
@@ -57,9 +58,10 @@ export async function POST(request) {
       },
     });
 
-    response.cookies.set("authToken", token, {
+    response.cookies.set("teacherToken", token, {
       httpOnly: true,
-      maxAge: 60 * 60 * 24, // 1 day
+      maxAge: 60 * 60 * 24,
+      path: "/",
     });
 
     return response;

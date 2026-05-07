@@ -1,24 +1,93 @@
 "use client"
-import { useState } from "react";
-import { Plus, Bell, AlertCircle, Info, Pencil, Trash2, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Bell, AlertCircle, Info, Trash2, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { notices } from "../../data/mockdata";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
-const priorityColor = {
-  high: "destructive" as const,
-  medium: "default" as const,
-  low: "outline" as const,
+const BRANCHES = ["CSE", "ECE", "EEE", "ME", "CE", "IT", "MCA", "MBA"];
+
+interface Notice {
+  _id: string;
+  title: string;
+  content: string;
+  priority: "high" | "medium" | "low";
+  authorName: string;
+  authorRole: string;
+  branch: string;
+  createdAt?: string;
+}
+
+const priorityVariant: Record<string, "destructive" | "default" | "outline"> = {
+  high: "destructive",
+  medium: "default",
+  low: "outline",
+};
+
+const emptyForm = {
+  title: "",
+  content: "",
+  priority: "medium",
+  branch: "",
 };
 
 export default function AdminNotices() {
-  const [noticeList, setNoticeList] = useState(notices);
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [adminName, setAdminName] = useState("Admin");
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ title: "", content: "", priority: "medium" });
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
-  const filtered = noticeList.filter(n => {
+  useEffect(() => {
+    async function init() {
+      try {
+        const meRes = await fetch("/api/admin/me");
+        if (meRes.ok) {
+          const { admin } = await meRes.json();
+          if (admin?.name) setAdminName(admin.name);
+        }
+      } catch {}
+      fetchNotices();
+    }
+    init();
+  }, []);
+
+  async function fetchNotices() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/dept/notices");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setNotices(data);
+    } catch {
+      toast.error("Failed to load notices");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const filtered = notices.filter(n => {
     const matchFilter = filter === "all" || n.priority === filter;
     const matchSearch =
       n.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -26,19 +95,47 @@ export default function AdminNotices() {
     return matchFilter && matchSearch;
   });
 
-  const handleCreate = () => {
-    if (!form.title.trim()) return;
-    setNoticeList(prev => [{
-      id: Date.now(),
-      title: form.title,
-      content: form.content,
-      date: new Date().toISOString().split("T")[0],
-      priority: form.priority as "high" | "medium" | "low",
-      author: "Admin Office",
-    }, ...prev]);
-    setShowModal(false);
-    setForm({ title: "", content: "", priority: "medium" });
-  };
+  async function handlePost() {
+    if (!form.title.trim() || !form.branch) {
+      toast.error("Title and branch are required");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/dept/notices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          authorName: adminName,
+          authorRole: "admin",
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Notice posted successfully");
+      setOpen(false);
+      setForm(emptyForm);
+      fetchNotices();
+    } catch {
+      toast.error("Failed to post notice");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/dept/notices?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Notice deleted");
+      setNotices(prev => prev.filter(n => n._id !== id));
+    } catch {
+      toast.error("Failed to delete notice");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <div className="p-8">
@@ -47,41 +144,48 @@ export default function AdminNotices() {
           <h1 className="text-2xl font-semibold text-gray-900 mb-1">Notice Management</h1>
           <p className="text-gray-600">Create and manage official department notices</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-        >
+        <Button onClick={() => setOpen(true)} className="flex items-center gap-2">
           <Plus className="size-4" />
-          New Notice
-        </button>
+          Post Notice
+        </Button>
       </div>
 
-      {/* Summary Row */}
+      {/* Summary */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        {[
-          { label: "Total Notices", value: noticeList.length, color: "text-gray-900" },
-          { label: "High Priority", value: noticeList.filter(n => n.priority === "high").length, color: "text-red-600" },
-          { label: "This Week", value: noticeList.filter(n => new Date(n.date) > new Date(Date.now() - 7 * 86400000)).length, color: "text-blue-600" },
-        ].map(item => (
-          <Card key={item.label}>
-            <CardContent className="p-4 text-center">
-              <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
-              <p className="text-sm text-gray-500 mt-1">{item.label}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="rounded-2xl border-0 shadow-sm">
+              <CardContent className="p-5 text-center">
+                <Skeleton className="h-8 w-12 mx-auto mb-2" />
+                <Skeleton className="h-4 w-24 mx-auto" />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          [
+            { label: "Total Notices", value: notices.length, color: "text-gray-900" },
+            { label: "High Priority", value: notices.filter(n => n.priority === "high").length, color: "text-red-600" },
+            { label: "This Week", value: notices.filter(n => new Date(n.createdAt || "").getTime() > Date.now() - 7 * 86400000).length, color: "text-blue-600" },
+          ].map(item => (
+            <Card key={item.label} className="rounded-2xl border-0 shadow-sm">
+              <CardContent className="p-5 text-center">
+                <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
+                <p className="text-sm text-gray-500 mt-1">{item.label}</p>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Search & Filter */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-4 mb-6 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-          <input
-            type="text"
+          <Input
             placeholder="Search notices..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 h-10 border border-gray-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className="pl-10 rounded-xl"
           />
         </div>
         <div className="flex gap-2">
@@ -89,9 +193,7 @@ export default function AdminNotices() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
-                filter === f ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
-              }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${filter === f ? "bg-blue-600 text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"}`}
             >
               {f === "all" ? "All" : f}
             </button>
@@ -101,77 +203,123 @@ export default function AdminNotices() {
 
       {/* Notices */}
       <div className="space-y-4">
-        {filtered.map(notice => (
-          <Card key={notice.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    {notice.priority === "high" && <AlertCircle className="size-4 text-red-500 flex-shrink-0" />}
-                    {notice.priority === "medium" && <Info className="size-4 text-blue-500 flex-shrink-0" />}
-                    <h3 className="font-semibold text-gray-900">{notice.title}</h3>
-                    <Badge variant={priorityColor[notice.priority as keyof typeof priorityColor]} className="text-xs">{notice.priority}</Badge>
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="rounded-2xl border-0 shadow-sm">
+              <CardContent className="p-6">
+                <Skeleton className="h-5 w-2/3 mb-3" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-3/4 mb-4" />
+                <Skeleton className="h-3 w-32" />
+              </CardContent>
+            </Card>
+          ))
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20">
+            <Bell className="size-12 mx-auto mb-4 text-gray-300" />
+            <p className="font-medium text-gray-500">No notices found</p>
+            <p className="text-gray-400 text-sm mt-1">Post a notice to get started</p>
+          </div>
+        ) : (
+          filtered.map(notice => (
+            <Card key={notice._id} className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      {notice.priority === "high" && <AlertCircle className="size-4 text-red-500 flex-shrink-0" />}
+                      {notice.priority === "medium" && <Info className="size-4 text-blue-500 flex-shrink-0" />}
+                      <h3 className="font-semibold text-gray-900">{notice.title}</h3>
+                      <Badge variant={priorityVariant[notice.priority]} className="text-xs capitalize">{notice.priority}</Badge>
+                      {notice.branch && <Badge variant="outline" className="text-xs">{notice.branch}</Badge>}
+                    </div>
+                    <p className="text-gray-600 text-sm leading-relaxed mb-3">{notice.content}</p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span>By {notice.authorName}</span>
+                      {notice.createdAt && (
+                        <>
+                          <span>·</span>
+                          <span>{new Date(notice.createdAt).toLocaleDateString()}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-3">{notice.content}</p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span>By {notice.author}</span>
-                    <span>·</span>
-                    <span>{notice.date}</span>
-                  </div>
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                    <Pencil className="size-4" />
-                  </button>
                   <button
-                    onClick={() => setNoticeList(prev => prev.filter(n => n.id !== notice.id))}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    onClick={() => handleDelete(notice._id)}
+                    disabled={deletingId === notice._id}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 disabled:opacity-40"
                   >
                     <Trash2 className="size-4" />
                   </button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {filtered.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
-            <Bell className="size-12 mx-auto mb-4 opacity-30" />
-            <p className="font-medium">No notices found</p>
-          </div>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6" onClick={e => e.stopPropagation()}>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Post New Notice</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-                <input type="text" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="Notice title..." className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                <textarea value={form.content} onChange={e => setForm(p => ({ ...p, content: e.target.value }))} rows={4} placeholder="Notice content..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:border-blue-500" />
-              </div>
+      {/* Post Notice Dialog */}
+      <Dialog open={open} onOpenChange={o => { setOpen(o); if (!o) setForm(emptyForm); }}>
+        <DialogContent className="max-w-lg rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Post New Notice</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+              <Input
+                placeholder="Notice title..."
+                value={form.title}
+                onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+              <textarea
+                placeholder="Notice content..."
+                value={form.content}
+                onChange={e => setForm(p => ({ ...p, content: e.target.value }))}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                <select value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))} className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500">
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
+                <Select value={form.priority} onValueChange={v => setForm(p => ({ ...p, priority: v }))}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Branch *</label>
+                <Select value={form.branch} onValueChange={v => setForm(p => ({ ...p, branch: v }))}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Select branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowModal(false)} className="flex-1 h-10 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-              <button onClick={handleCreate} className="flex-1 h-10 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Post Notice</button>
-            </div>
+            <p className="text-xs text-gray-500">Posting as: <span className="font-medium text-gray-700">{adminName}</span> (Admin)</p>
           </div>
-        </div>
-      )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)} className="rounded-xl">Cancel</Button>
+            <Button onClick={handlePost} disabled={submitting} className="rounded-xl">
+              {submitting ? "Posting..." : "Post Notice"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

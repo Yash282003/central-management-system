@@ -69,7 +69,7 @@ export default function TeacherTests() {
       const res = await fetch(`/api/dept/tests?branch=${encodeURIComponent(branch)}`);
       if (!res.ok) throw new Error("Failed to fetch tests");
       const data = await res.json();
-      setTests(data.tests ?? data);
+      setTests(Array.isArray(data.data) ? data.data : []);
     } catch {
       toast.error("Failed to load tests");
     } finally {
@@ -92,7 +92,7 @@ export default function TeacherTests() {
       });
       if (!res.ok) throw new Error("Failed to create test");
       const data = await res.json();
-      setTests(prev => [data.test ?? data, ...prev]);
+      setTests(prev => [data.data, ...prev]);
       setShowModal(false);
       setForm(EMPTY_FORM);
       toast.success("Test scheduled successfully");

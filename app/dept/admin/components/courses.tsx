@@ -72,7 +72,7 @@ export default function AdminCourses() {
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch courses");
       const data = await res.json();
-      setCourses(data);
+      setCourses(Array.isArray(data.data) ? data.data : []);
     } catch {
       toast.error("Failed to load courses");
     } finally {

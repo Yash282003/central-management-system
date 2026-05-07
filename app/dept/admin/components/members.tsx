@@ -36,7 +36,7 @@ const DEPARTMENTS = ["CSE", "ECE", "EEE", "ME", "CE", "IT", "MCA", "MBA"];
 
 interface Teacher {
   _id: string;
-  name?: string;
+  name?: { first?: string; middle?: string; last?: string } | string;
   firstName?: string;
   lastName?: string;
   employeeId: string;
@@ -47,7 +47,10 @@ interface Teacher {
 }
 
 function teacherName(t: Teacher) {
-  if (t.name) return t.name;
+  if (t.name && typeof t.name === "object") {
+    return [t.name.first, t.name.last].filter(Boolean).join(" ") || "—";
+  }
+  if (typeof t.name === "string" && t.name) return t.name;
   return [t.firstName, t.lastName].filter(Boolean).join(" ") || "—";
 }
 
@@ -79,7 +82,7 @@ export default function AdminMembers() {
       const res = await fetch("/api/admin/manage-teachers");
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setTeachers(Array.isArray(data) ? data : []);
+      setTeachers(Array.isArray(data.data) ? data.data : []);
     } catch {
       toast.error("Failed to load teachers");
     } finally {

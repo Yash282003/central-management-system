@@ -57,7 +57,7 @@ export default function TeacherNotes() {
       const res = await fetch(`/api/dept/notes?branch=${encodeURIComponent(branch)}`);
       if (!res.ok) throw new Error("Failed to fetch notes");
       const data = await res.json();
-      setNotes(data.notes ?? data);
+      setNotes(Array.isArray(data.data) ? data.data : []);
     } catch {
       toast.error("Failed to load notes");
     } finally {
@@ -80,7 +80,7 @@ export default function TeacherNotes() {
       });
       if (!res.ok) throw new Error("Failed to upload note");
       const data = await res.json();
-      setNotes(prev => [data.note ?? data, ...prev]);
+      setNotes(prev => [data.data, ...prev]);
       setShowModal(false);
       setForm(EMPTY_FORM);
       toast.success("Note uploaded successfully");

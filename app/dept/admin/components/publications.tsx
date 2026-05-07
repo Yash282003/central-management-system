@@ -62,7 +62,7 @@ export default function AdminPublications() {
       const res = await fetch("/api/dept/publications");
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setPublications(data);
+      setPublications(Array.isArray(data.data) ? data.data : []);
     } catch {
       toast.error("Failed to load publications");
     } finally {

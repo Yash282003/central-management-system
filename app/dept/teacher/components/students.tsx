@@ -81,7 +81,7 @@ export default function TeacherStudents() {
       const res = await fetch(`/api/dept/students?branch=${encodeURIComponent(branch)}`);
       if (!res.ok) throw new Error("Failed to fetch students");
       const data = await res.json();
-      setStudents(data.students ?? data);
+      setStudents(Array.isArray(data.data) ? data.data : []);
     } catch {
       toast.error("Failed to load students");
     } finally {

@@ -64,8 +64,15 @@ export default function AdminNotices() {
       try {
         const meRes = await fetch("/api/admin/me");
         if (meRes.ok) {
-          const { admin } = await meRes.json();
-          if (admin?.name) setAdminName(admin.name);
+          const meData = await meRes.json();
+          const admin = meData.data ?? meData.admin;
+          if (admin?.name) {
+            if (typeof admin.name === "object") {
+              setAdminName([admin.name.first, admin.name.last].filter(Boolean).join(" ") || "Admin");
+            } else {
+              setAdminName(admin.name);
+            }
+          }
         }
       } catch {}
       fetchNotices();
@@ -79,7 +86,7 @@ export default function AdminNotices() {
       const res = await fetch("/api/dept/notices");
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setNotices(data);
+      setNotices(Array.isArray(data.data) ? data.data : []);
     } catch {
       toast.error("Failed to load notices");
     } finally {

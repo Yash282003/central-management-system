@@ -69,10 +69,10 @@ export default function HostelStudentDashboard() {
           fetch("/api/hostel/student/applications").then((r) => r.json()),
         ]);
 
-        if (roomRes.status === "fulfilled") setRoom(roomRes.value);
-        if (notifRes.status === "fulfilled") setNotifications(notifRes.value ?? []);
-        if (compRes.status === "fulfilled") setComplaints(compRes.value ?? []);
-        if (appRes.status === "fulfilled") setApplications(appRes.value ?? []);
+        if (roomRes.status === "fulfilled") setRoom(roomRes.value.data ?? roomRes.value);
+        if (notifRes.status === "fulfilled") setNotifications(Array.isArray(notifRes.value.data) ? notifRes.value.data : []);
+        if (compRes.status === "fulfilled") setComplaints(Array.isArray(compRes.value.data) ? compRes.value.data : []);
+        if (appRes.status === "fulfilled") setApplications(Array.isArray(appRes.value.data) ? appRes.value.data : []);
       } catch {
         // silently handled per-promise above
       } finally {

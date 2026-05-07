@@ -10,7 +10,7 @@ ConnectDb();
 export async function GET() {
   try {
     const [totalStudents, pendingApps, openComplaints, lowStock] = await Promise.all([
-      Student.countDocuments({ hostelRoom: { $exists: true, $ne: "" } }),
+      Student.countDocuments(),
       HostelApplication.countDocuments({ status: "pending" }),
       HostelComplaint.countDocuments({ status: { $in: ["open", "in-progress"] } }),
       Stock.countDocuments({ $expr: { $lte: ["$quantity", "$threshold"] } }),

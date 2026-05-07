@@ -9,9 +9,10 @@ import {
   Plus,
   FileText,
   Bell,
-  Sparkles,
   GraduationCap,
 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Teacher {
   _id: string;
@@ -34,20 +35,13 @@ interface StudentRow {
 function useCounter(target: number, duration = 1100) {
   const [val, setVal] = useState(0);
   useEffect(() => {
-    if (!target) {
-      setVal(0);
-      return;
-    }
+    if (!target) { setVal(0); return; }
     let start = 0;
     const step = target / (duration / 16);
     const timer = setInterval(() => {
       start += step;
-      if (start >= target) {
-        setVal(target);
-        clearInterval(timer);
-      } else {
-        setVal(Math.floor(start));
-      }
+      if (start >= target) { setVal(target); clearInterval(timer); }
+      else setVal(Math.floor(start));
     }, 16);
     return () => clearInterval(timer);
   }, [target, duration]);
@@ -59,72 +53,6 @@ function greeting() {
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
-}
-
-interface StatProps {
-  label: string;
-  value: number;
-  hue: string;
-  accent: string;
-  icon: React.ReactNode;
-  caption?: string;
-  delay: number;
-}
-
-function StatCard({ label, value, hue, accent, icon, caption, delay }: StatProps) {
-  const count = useCounter(value);
-  return (
-    <div
-      className="relative overflow-hidden rounded-2xl bg-white p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
-      style={{
-        border: "1px solid rgba(99,102,241,0.08)",
-        boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.04)",
-        animation: "fadeSlideUp 0.6s ease both",
-        animationDelay: `${delay}ms`,
-      }}
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rotate-12 opacity-[0.07]"
-        style={{
-          backgroundImage: `repeating-linear-gradient(45deg, ${hue} 0 2px, transparent 2px 10px)`,
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[3px]"
-        style={{ background: `linear-gradient(90deg, transparent, ${hue}, transparent)` }}
-      />
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500 font-medium">
-            {label}
-          </p>
-          <p
-            className="mt-3 text-4xl font-semibold tracking-tight"
-            style={{ fontFamily: "'Sora', 'Plus Jakarta Sans', sans-serif", color: "#0f172a" }}
-          >
-            {count}
-          </p>
-          {caption && <p className="mt-1 text-xs text-slate-400">{caption}</p>}
-        </div>
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-xl"
-          style={{ background: `${hue}14`, color: accent }}
-        >
-          {icon}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Skel({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`animate-pulse rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 ${className}`}
-    />
-  );
 }
 
 export default function TeacherDashboard() {
@@ -151,12 +79,10 @@ export default function TeacherDashboard() {
           fetch(`/api/dept/notices${branchQ}`).then((r) => r.json()),
           fetch(`/api/dept/tests${branchQ}`).then((r) => r.json()),
         ]);
-        if (sRes.status === "fulfilled" && sRes.value.success) {
+        if (sRes.status === "fulfilled" && sRes.value.success)
           setStudents(sRes.value.data ?? []);
-        }
-        if (nRes.status === "fulfilled" && nRes.value.success) {
+        if (nRes.status === "fulfilled" && nRes.value.success)
           setNoticesCount((nRes.value.data ?? []).length);
-        }
         if (tRes.status === "fulfilled" && tRes.value.success) {
           const upcoming = (tRes.value.data ?? []).filter(
             (t: { date: string }) => new Date(t.date) >= new Date()
@@ -176,114 +102,90 @@ export default function TeacherDashboard() {
     ? `${teacher.name?.first ?? ""} ${teacher.name?.last ?? ""}`.trim()
     : "";
 
-  const today = useMemo(
-    () =>
-      new Date().toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-      }),
-    []
-  );
-
   const topStudents = students.slice(0, 5);
 
+  const studentsCount = useCounter(loading ? 0 : students.length);
+  const noticesCounted = useCounter(loading ? 0 : noticesCount);
+  const testsCounted = useCounter(loading ? 0 : testsCount);
+
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap');
-        @keyframes fadeSlideUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .dept-root { font-family: 'DM Sans', sans-serif; }
-        .dept-display { font-family: 'Sora', sans-serif; letter-spacing: -0.02em; }
-      `}</style>
-
-      <div className="dept-root min-h-full bg-[#fafbff] p-8">
-        {/* Header */}
-        <div className="mb-10" style={{ animation: "fadeSlideUp 0.5s ease both" }}>
-          <div className="flex items-center gap-2 text-xs font-medium text-indigo-600">
-            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-indigo-500" />
-            <span className="uppercase tracking-[0.14em]">{today}</span>
-          </div>
+    <div className="p-8">
+      {/* Header */}
+      <div
+        className="mb-8"
+        style={{ animation: "fadeSlideUp 0.4s ease both" }}
+      >
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+          {greeting()},{" "}
           {loading ? (
-            <Skel className="h-10 w-72 mt-3" />
+            <Skeleton className="inline-block h-7 w-36 align-middle" />
           ) : (
-            <h1 className="dept-display mt-3 text-[2.4rem] leading-[1.05] font-semibold text-slate-900">
-              {greeting()},{" "}
-              <span className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-500 bg-clip-text text-transparent">
-                {fullName || "Professor"}
-              </span>
-              <span className="text-slate-400">.</span>
-            </h1>
+            <span>{fullName || "Professor"}</span>
           )}
-          <p className="mt-2 text-sm text-slate-500">
-            {teacher?.designation ?? "Faculty"}
-            {teacher?.department ? ` · ${teacher.department} department` : ""}
-          </p>
-        </div>
+        </h1>
+        <p className="text-gray-500 text-sm">
+          {teacher?.designation ?? "Faculty"}
+          {teacher?.department ? ` · ${teacher.department} department` : ""}
+        </p>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-          {loading ? (
-            Array.from({ length: 3 }).map((_, i) => <Skel key={i} className="h-32" />)
-          ) : (
-            <>
-              <StatCard
-                label="Students in dept"
-                value={students.length}
-                hue="#6366f1"
-                accent="#4f46e5"
-                icon={<Users className="size-4" />}
-                caption={teacher?.department ?? "All branches"}
-                delay={60}
-              />
-              <StatCard
-                label="Notices posted"
-                value={noticesCount}
-                hue="#0ea5e9"
-                accent="#0284c7"
-                icon={<Bell className="size-4" />}
-                caption="Visible to your branch"
-                delay={140}
-              />
-              <StatCard
-                label="Upcoming tests"
-                value={testsCount}
-                hue="#f59e0b"
-                accent="#d97706"
-                icon={<ClipboardList className="size-4" />}
-                caption="Scheduled ahead"
-                delay={220}
-              />
-            </>
-          )}
-        </div>
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-2xl" />
+          ))
+        ) : (
+          <>
+            <Card
+              className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50 hover:-translate-y-0.5 transition-all"
+              style={{ animation: "fadeSlideUp 0.5s ease both", animationDelay: "60ms" }}
+            >
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-blue-600 mb-1">STUDENTS IN DEPT</p>
+                <p className="text-3xl font-bold text-blue-700">{studentsCount}</p>
+                <p className="text-xs text-blue-500 mt-1">{teacher?.department ?? "all branches"}</p>
+              </CardContent>
+            </Card>
+            <Card
+              className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-teal-50 hover:-translate-y-0.5 transition-all"
+              style={{ animation: "fadeSlideUp 0.5s ease both", animationDelay: "120ms" }}
+            >
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-emerald-600 mb-1">NOTICES POSTED</p>
+                <p className="text-3xl font-bold text-emerald-700">{noticesCounted}</p>
+                <p className="text-xs text-emerald-500 mt-1">visible to your branch</p>
+              </CardContent>
+            </Card>
+            <Card
+              className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-violet-50 to-purple-50 hover:-translate-y-0.5 transition-all"
+              style={{ animation: "fadeSlideUp 0.5s ease both", animationDelay: "180ms" }}
+            >
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-violet-600 mb-1">UPCOMING TESTS</p>
+                <p className="text-3xl font-bold text-violet-700">{testsCounted}</p>
+                <p className="text-xs text-violet-500 mt-1">scheduled ahead</p>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
 
-        {/* Two col: students + actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div
-            className="lg:col-span-2 rounded-2xl bg-white p-6"
-            style={{
-              border: "1px solid rgba(99,102,241,0.08)",
-              boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.04)",
-              animation: "fadeSlideUp 0.6s ease both",
-              animationDelay: "300ms",
-            }}
-          >
-            <div className="mb-5 flex items-center justify-between">
+      {/* Students table + Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card
+          className="lg:col-span-2 rounded-2xl border-0 shadow-sm"
+          style={{ animation: "fadeSlideUp 0.5s ease both", animationDelay: "240ms" }}
+        >
+          <CardContent className="p-6">
+            <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="dept-display text-lg font-semibold text-slate-900">
-                  Recent students
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Quick view of CGPA & attendance
-                </p>
+                <h2 className="text-lg font-semibold text-gray-900">Recent Students</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Quick view of CGPA & attendance</p>
               </div>
               <button
                 onClick={() => router.push("/dept/teacher/students")}
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1"
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
               >
                 View all <ArrowUpRight className="size-3" />
               </button>
@@ -292,16 +194,16 @@ export default function TeacherDashboard() {
             {loading ? (
               <div className="space-y-2">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Skel key={i} className="h-12" />
+                  <Skeleton key={i} className="h-12 rounded-xl" />
                 ))}
               </div>
             ) : topStudents.length === 0 ? (
               <div className="py-12 text-center">
-                <GraduationCap className="size-8 text-slate-300 mx-auto" />
-                <p className="text-sm text-slate-400 mt-3">No students yet</p>
+                <GraduationCap className="size-8 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm text-gray-500">No students yet</p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-gray-100">
                 {topStudents.map((s, i) => {
                   const initials =
                     `${s.name.first?.[0] ?? ""}${s.name.last?.[0] ?? ""}`.toUpperCase();
@@ -311,36 +213,28 @@ export default function TeacherDashboard() {
                       className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
                       style={{
                         animation: "fadeSlideUp 0.5s ease both",
-                        animationDelay: `${360 + i * 60}ms`,
+                        animationDelay: `${300 + i * 50}ms`,
                       }}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center text-xs font-semibold text-indigo-700">
+                        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-xs font-semibold text-blue-700">
                           {initials || "ST"}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">
+                          <p className="text-sm font-medium text-gray-900 truncate">
                             {s.name.first} {s.name.last}
                           </p>
-                          <p className="text-[11px] text-slate-400 font-mono">
-                            {s.regdNo}
-                          </p>
+                          <p className="text-[11px] text-gray-400 font-mono">{s.regdNo}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-6 text-right">
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-slate-400">
-                            CGPA
-                          </p>
-                          <p className="text-sm font-semibold text-slate-900 mt-0.5">
-                            {s.cgpa ?? "—"}
-                          </p>
+                          <p className="text-[10px] uppercase tracking-wider text-gray-400">CGPA</p>
+                          <p className="text-sm font-semibold text-gray-900 mt-0.5">{s.cgpa ?? "—"}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-slate-400">
-                            Attd.
-                          </p>
-                          <p className="text-sm font-semibold text-slate-900 mt-0.5">
+                          <p className="text-[10px] uppercase tracking-wider text-gray-400">Attd.</p>
+                          <p className="text-sm font-semibold text-gray-900 mt-0.5">
                             {s.avgAttendance != null ? `${s.avgAttendance}%` : "—"}
                           </p>
                         </div>
@@ -350,24 +244,16 @@ export default function TeacherDashboard() {
                 })}
               </div>
             )}
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Quick actions */}
-          <div
-            className="rounded-2xl bg-white p-6"
-            style={{
-              border: "1px solid rgba(99,102,241,0.08)",
-              boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.04)",
-              animation: "fadeSlideUp 0.6s ease both",
-              animationDelay: "380ms",
-            }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="size-4 text-indigo-500" />
-              <h3 className="dept-display text-lg font-semibold text-slate-900">
-                Quick actions
-              </h3>
-            </div>
+        {/* Quick actions */}
+        <Card
+          className="rounded-2xl border-0 shadow-sm"
+          style={{ animation: "fadeSlideUp 0.5s ease both", animationDelay: "320ms" }}
+        >
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-2">
               {[
                 { label: "Post a notice", path: "/dept/teacher/notices", icon: Plus },
@@ -381,20 +267,27 @@ export default function TeacherDashboard() {
                   <button
                     key={q.label}
                     onClick={() => router.push(q.path)}
-                    className="w-full flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3 text-left hover:border-indigo-200 hover:bg-indigo-50/40 transition-colors group"
+                    className="w-full flex items-center justify-between rounded-xl border border-gray-100 px-4 py-3 text-left hover:border-blue-200 hover:bg-blue-50/40 transition-colors group"
                   >
-                    <span className="inline-flex items-center gap-2.5 text-sm font-medium text-slate-700">
-                      <Icon className="size-4 text-indigo-500" />
+                    <span className="inline-flex items-center gap-2.5 text-sm font-medium text-gray-700">
+                      <Icon className="size-4 text-blue-500" />
                       {q.label}
                     </span>
-                    <ArrowUpRight className="size-4 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                    <ArrowUpRight className="size-4 text-gray-300 group-hover:text-blue-500 transition-colors" />
                   </button>
                 );
               })}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
-    </>
+
+      <style>{`
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
   );
 }

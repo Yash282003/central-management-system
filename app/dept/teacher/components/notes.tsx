@@ -1,10 +1,13 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react";
 import { Upload, Download, BookOpen, Search, FileText, Trash2, Link } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 interface Note {
@@ -80,7 +83,7 @@ export default function TeacherNotes() {
       });
       if (!res.ok) throw new Error("Failed to upload note");
       const data = await res.json();
-      setNotes(prev => [data.data, ...prev]);
+      setNotes((prev) => [data.data, ...prev]);
       setShowModal(false);
       setForm(EMPTY_FORM);
       toast.success("Note uploaded successfully");
@@ -96,7 +99,7 @@ export default function TeacherNotes() {
     try {
       const res = await fetch(`/api/dept/notes?id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete note");
-      setNotes(prev => prev.filter(n => n._id !== id));
+      setNotes((prev) => prev.filter((n) => n._id !== id));
       toast.success("Note deleted");
     } catch {
       toast.error("Failed to delete note");
@@ -105,77 +108,57 @@ export default function TeacherNotes() {
     }
   }
 
-  const filtered = notes.filter(n =>
-    n.title.toLowerCase().includes(search.toLowerCase()) ||
-    n.subject.toLowerCase().includes(search.toLowerCase())
+  const filtered = notes.filter(
+    (n) =>
+      n.title.toLowerCase().includes(search.toLowerCase()) ||
+      n.subject.toLowerCase().includes(search.toLowerCase())
   );
 
   const totalDownloads = notes.reduce((acc, n) => acc + (n.downloads ?? 0), 0);
-  const uniqueSubjects = new Set(notes.map(n => n.subject)).size;
+  const uniqueSubjects = new Set(notes.map((n) => n.subject)).size;
 
   return (
     <div className="p-8">
+      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900 mb-1">Notes Management</h1>
-          <p className="text-gray-600">Upload and manage course materials</p>
+          <p className="text-gray-500 text-sm">Upload and manage course materials for your department</p>
         </div>
-        <button
+        <Button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+          className="rounded-xl"
         >
-          <Upload className="size-4" />
+          <Upload className="size-4 mr-2" />
           Upload Notes
-        </button>
+        </Button>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {loading ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} className="border-0 shadow-sm rounded-2xl">
-              <CardContent className="p-4 flex items-center gap-3">
-                <Skeleton className="size-10 rounded-xl flex-shrink-0" />
-                <div className="space-y-2">
-                  <Skeleton className="h-3 w-20" />
-                  <Skeleton className="h-6 w-10" />
-                </div>
-              </CardContent>
-            </Card>
-          ))
+          Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)
         ) : (
           <>
-            <Card className="border-0 shadow-sm rounded-2xl">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="size-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                  <FileText className="size-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Total Notes</p>
-                  <p className="text-xl font-semibold text-gray-900">{notes.length}</p>
-                </div>
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-blue-600 mb-1">Total Notes</p>
+                <p className="text-3xl font-bold text-blue-700">{notes.length}</p>
+                <p className="text-xs text-blue-500 mt-1">materials uploaded</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-sm rounded-2xl">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="size-10 bg-green-50 rounded-xl flex items-center justify-center">
-                  <Download className="size-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Total Downloads</p>
-                  <p className="text-xl font-semibold text-gray-900">{totalDownloads}</p>
-                </div>
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-teal-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-emerald-600 mb-1">Total Downloads</p>
+                <p className="text-3xl font-bold text-emerald-700">{totalDownloads}</p>
+                <p className="text-xs text-emerald-500 mt-1">across all notes</p>
               </CardContent>
             </Card>
-            <Card className="border-0 shadow-sm rounded-2xl">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="size-10 bg-purple-50 rounded-xl flex items-center justify-center">
-                  <BookOpen className="size-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Subjects Covered</p>
-                  <p className="text-xl font-semibold text-gray-900">{uniqueSubjects}</p>
-                </div>
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-violet-50 to-purple-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-violet-600 mb-1">Subjects</p>
+                <p className="text-3xl font-bold text-violet-700">{uniqueSubjects}</p>
+                <p className="text-xs text-violet-500 mt-1">subjects covered</p>
               </CardContent>
             </Card>
           </>
@@ -183,17 +166,15 @@ export default function TeacherNotes() {
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by title or subject..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 h-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-sm"
-          />
-        </div>
+      <div className="relative max-w-sm mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+        <Input
+          type="text"
+          placeholder="Search by title or subject..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-10 rounded-xl"
+        />
       </div>
 
       {/* Notes Grid */}
@@ -218,17 +199,20 @@ export default function TeacherNotes() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
-          <FileText className="size-12 mx-auto mb-4 opacity-30" />
+        <div className="text-center py-20">
+          <FileText className="size-12 mx-auto mb-4 text-gray-300" />
           <p className="font-medium text-gray-500">No notes found</p>
-          <p className="text-sm mt-1">
+          <p className="text-sm text-gray-400 mt-1">
             {search ? "Try a different search term" : "Upload your first note to get started"}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(note => (
-            <Card key={note._id} className="border-0 shadow-sm rounded-2xl hover:shadow-md transition-shadow">
+          {filtered.map((note) => (
+            <Card
+              key={note._id}
+              className="border-0 shadow-sm rounded-2xl hover:-translate-y-0.5 transition-all"
+            >
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div className="size-10 bg-red-50 rounded-xl flex items-center justify-center">
@@ -242,14 +226,17 @@ export default function TeacherNotes() {
                     <Trash2 className="size-4" />
                   </button>
                 </div>
+
                 <h3 className="font-semibold text-gray-900 mb-1 text-sm leading-tight line-clamp-2">
                   {note.title}
                 </h3>
                 <p className="text-xs text-gray-500 mb-3">{note.subject}</p>
+
                 <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                  <span>{new Date(note.createdAt).toLocaleDateString()}</span>
-                  <Badge variant="outline" className="text-xs">{note.branch}</Badge>
+                  <span>{new Date(note.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                  <Badge className="bg-blue-100 text-blue-700 border-0 text-xs">{note.branch}</Badge>
                 </div>
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 text-xs text-gray-500">
                     <Download className="size-3" />
@@ -281,64 +268,78 @@ export default function TeacherNotes() {
         >
           <div
             className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Upload Notes</h2>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="size-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <Upload className="size-5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Upload Notes</h2>
+                <p className="text-xs text-gray-500">Add a new resource for your students</p>
+              </div>
+            </div>
+
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-                <input
-                  type="text"
+              <div className="space-y-1.5">
+                <Label htmlFor="noteTitle">Title *</Label>
+                <Input
+                  id="noteTitle"
                   value={form.title}
-                  onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+                  onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
                   placeholder="e.g. Week 5 — Sorting Algorithms"
-                  className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                  className="rounded-xl"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
-                <input
-                  type="text"
+
+              <div className="space-y-1.5">
+                <Label htmlFor="noteSubject">Subject *</Label>
+                <Input
+                  id="noteSubject"
                   value={form.subject}
-                  onChange={e => setForm(p => ({ ...p, subject: e.target.value }))}
+                  onChange={(e) => setForm((p) => ({ ...p, subject: e.target.value }))}
                   placeholder="e.g. Data Structures and Algorithms"
-                  className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                  className="rounded-xl"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">File URL *</label>
-                <input
+
+              <div className="space-y-1.5">
+                <Label htmlFor="noteUrl">File URL *</Label>
+                <Input
+                  id="noteUrl"
                   type="url"
                   value={form.fileUrl}
-                  onChange={e => setForm(p => ({ ...p, fileUrl: e.target.value }))}
+                  onChange={(e) => setForm((p) => ({ ...p, fileUrl: e.target.value }))}
                   placeholder="https://drive.google.com/..."
-                  className="w-full h-10 px-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm"
+                  className="rounded-xl"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-                <input
-                  type="text"
+
+              <div className="space-y-1.5">
+                <Label className="text-gray-500">Branch</Label>
+                <Input
                   value={teacher?.department ?? ""}
                   readOnly
-                  className="w-full h-10 px-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-500"
+                  className="rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed"
                 />
               </div>
             </div>
+
             <div className="flex gap-3 mt-6">
-              <button
+              <Button
+                variant="outline"
+                className="flex-1 rounded-xl"
                 onClick={() => { setShowModal(false); setForm(EMPTY_FORM); }}
-                className="flex-1 h-10 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                className="flex-1 rounded-xl"
                 onClick={handleUpload}
                 disabled={submitting}
-                className="flex-1 h-10 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-60"
               >
                 {submitting ? "Uploading..." : "Upload"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

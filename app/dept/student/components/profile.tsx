@@ -8,6 +8,7 @@ import {
   BookOpen,
   Hash,
   Loader2,
+  Lock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -270,12 +271,9 @@ export default function StudentProfile() {
 
                 {/* Non-editable: email */}
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-1 text-gray-500">
-                    <Mail className="size-3.5" />
+                  <Label className="flex items-center gap-1.5 text-gray-500">
+                    <Lock className="size-3.5" />
                     Email
-                    <span className="text-xs text-gray-400 font-normal ml-1">
-                      (read-only)
-                    </span>
                   </Label>
                   <Input
                     value={user.email}
@@ -315,14 +313,12 @@ export default function StudentProfile() {
                   />
                 </div>
 
-                {/* Non-editable: regd + dob */}
+                {/* Non-editable: regd + branch */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-gray-500">
-                      Registration No.{" "}
-                      <span className="text-xs text-gray-400 font-normal">
-                        (read-only)
-                      </span>
+                    <Label className="flex items-center gap-1.5 text-gray-500">
+                      <Lock className="size-3.5" />
+                      Registration No.
                     </Label>
                     <Input
                       value={user.regdNo}
@@ -331,11 +327,9 @@ export default function StudentProfile() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-gray-500">
-                      Branch{" "}
-                      <span className="text-xs text-gray-400 font-normal">
-                        (read-only)
-                      </span>
+                    <Label className="flex items-center gap-1.5 text-gray-500">
+                      <Lock className="size-3.5" />
+                      Branch
                     </Label>
                     <Input
                       value={user.branch}
@@ -345,7 +339,7 @@ export default function StudentProfile() {
                   </div>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-2 flex justify-end">
                   <Button
                     type="submit"
                     disabled={saving}

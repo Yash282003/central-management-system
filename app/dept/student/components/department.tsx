@@ -1,186 +1,187 @@
-"use client"
-import { Building, Users, Award, BookOpen, Mail, Phone, MapPin } from "lucide-react";
+"use client";
+import { useState, useEffect } from "react";
+import { Building, BookOpen, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { departments, facultyMembers, courses } from "../../data/mockdata";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface Course {
+  _id: string;
+  name: string;
+  code?: string;
+  credits?: number;
+  teacher?: { name?: { first?: string; last?: string } };
+  description?: string;
+}
+
+interface Publication {
+  _id: string;
+  title: string;
+  authors?: string;
+  journal?: string;
+  year?: number;
+  url?: string;
+}
 
 export default function StudentDepartment() {
-  const department = departments[0]; // Computer Science
-  const deptCourses = courses.slice(0, 5);
-  const deptFaculty = facultyMembers.slice(0, 4);
+  const [branch, setBranch] = useState<string>("");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const meRes = await fetch("/api/student/me");
+        const me = await meRes.json();
+        if (!me.success) return;
+        const dept: string = me.data?.branch ?? "";
+        setBranch(dept);
+
+        const [courseRes, pubRes] = await Promise.allSettled([
+          fetch(`/api/dept/courses?branch=${encodeURIComponent(dept)}`),
+          fetch(`/api/dept/publications?branch=${encodeURIComponent(dept)}`),
+        ]);
+
+        if (courseRes.status === "fulfilled" && courseRes.value.ok) {
+          const d = await courseRes.value.json();
+          if (d.success) setCourses(Array.isArray(d.data) ? d.data : []);
+        }
+        if (pubRes.status === "fulfilled" && pubRes.value.ok) {
+          const d = await pubRes.value.json();
+          if (d.success) setPublications(Array.isArray(d.data) ? d.data : []);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   return (
     <div className="p-8">
-      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Department Information</h1>
-        <p className="text-gray-600">
-          Overview of the {department.name} department
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">Department</h1>
+        <p className="text-gray-500 text-sm">
+          {branch ? `${branch} department — courses and publications` : "Department overview"}
         </p>
       </div>
 
-      {/* Department Overview */}
-      <Card className="mb-6">
-        <CardContent className="p-8">
-          <div className="flex items-start gap-6">
-            <div className="size-20 bg-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0">
-              <Building className="size-10 text-white" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
-                {department.name}
-              </h2>
-              <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                <span>Department Code: {department.code}</span>
-                <span>•</span>
-                <span>Head: {department.head}</span>
-              </div>
-              <div className="grid grid-cols-3 gap-6 mt-6">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Users className="size-5 text-blue-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Total Students</p>
-                      <p className="text-2xl font-semibold text-gray-900">{department.students}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <BookOpen className="size-5 text-green-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Active Courses</p>
-                      <p className="text-2xl font-semibold text-gray-900">{deptCourses.length}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Award className="size-5 text-purple-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Faculty Members</p>
-                      <p className="text-2xl font-semibold text-gray-900">{deptFaculty.length}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Faculty Members */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Faculty Members</CardTitle>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Courses */}
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <BookOpen className="size-4 text-blue-600" />
+              Courses Offered
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {deptFaculty.map((faculty) => (
-                <div
-                  key={faculty.id}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50/30 transition-colors"
-                >
-                  <div className="flex items-start gap-4">
-                    <Avatar className="size-12">
-                      <AvatarFallback className="bg-blue-600 text-white">
-                        {faculty.name.split(" ").map((n) => n[0]).join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900">{faculty.name}</h4>
-                      <p className="text-sm text-gray-600 mb-2">{faculty.designation}</p>
-                      <Badge variant="outline" className="text-xs mb-2">
-                        {faculty.specialization}
-                      </Badge>
-                      <div className="flex items-center gap-4 text-xs text-gray-600 mt-2">
-                        <div className="flex items-center gap-1">
-                          <Mail className="size-3" />
-                          {faculty.email}
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
+              </div>
+            ) : courses.length === 0 ? (
+              <div className="py-12 text-center">
+                <BookOpen className="size-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-500 text-sm">No courses listed yet</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {courses.map((c) => {
+                  const teacherName = c.teacher?.name
+                    ? `${c.teacher.name.first ?? ""} ${c.teacher.name.last ?? ""}`.trim()
+                    : null;
+                  return (
+                    <div
+                      key={c._id}
+                      className="p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-all"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-1.5">
+                        <p className="font-semibold text-gray-900 text-sm">{c.name}</p>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {c.code && (
+                            <Badge className="bg-blue-100 text-blue-700 border-0 text-xs">{c.code}</Badge>
+                          )}
+                          {c.credits != null && (
+                            <Badge className="bg-violet-100 text-violet-700 border-0 text-xs">
+                              {c.credits} cr
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                      <p className="text-xs text-gray-600 mt-1">
-                        Experience: {faculty.experience} years
-                      </p>
+                      {teacherName && (
+                        <p className="text-xs text-gray-500">{teacherName}</p>
+                      )}
+                      {c.description && (
+                        <p className="text-xs text-gray-400 mt-1 line-clamp-2">{c.description}</p>
+                      )}
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Courses Offered */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Courses Offered</CardTitle>
+        {/* Publications */}
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Building className="size-4 text-violet-600" />
+              Publications
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {deptCourses.map((course) => (
-                <div
-                  key={course.id}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{course.name}</h4>
-                      <p className="text-sm text-gray-600">{course.id}</p>
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+              </div>
+            ) : publications.length === 0 ? (
+              <div className="py-12 text-center">
+                <Building className="size-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-500 text-sm">No publications listed</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {publications.map((pub) => (
+                  <div
+                    key={pub._id}
+                    className="p-4 rounded-xl border border-gray-100 hover:border-violet-200 hover:bg-violet-50/30 transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1">{pub.title}</p>
+                        {pub.authors && (
+                          <p className="text-xs text-gray-500 mb-1.5">{pub.authors}</p>
+                        )}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {pub.journal && (
+                            <Badge className="bg-violet-100 text-violet-700 border-0 text-xs">{pub.journal}</Badge>
+                          )}
+                          {pub.year && (
+                            <span className="text-xs text-gray-400">{pub.year}</span>
+                          )}
+                        </div>
+                      </div>
+                      {pub.url && (
+                        <a
+                          href={pub.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0 p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <ExternalLink className="size-4" />
+                        </a>
+                      )}
                     </div>
-                    <Badge variant="outline">{course.credits} Credits</Badge>
                   </div>
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200">
-                    <span className="text-sm text-gray-600">Instructor: {course.instructor}</span>
-                    <span className="text-xs text-gray-500">
-                      {course.enrolled}/{course.capacity} enrolled
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Contact Information */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Contact Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex items-start gap-3">
-              <div className="size-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Mail className="size-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Email</p>
-                <p className="font-medium text-gray-900">cs.dept@university.edu</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="size-10 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Phone className="size-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Phone</p>
-                <p className="font-medium text-gray-900">+1 (555) 123-4567</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="size-10 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <MapPin className="size-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Location</p>
-                <p className="font-medium text-gray-900">Building A, Floor 3</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -14,41 +14,39 @@ interface Notification {
   createdAt: string;
 }
 
+const priorityConfig: Record<string, { label: string; badge: string; iconBg: string; iconColor: string; icon: React.ElementType }> = {
+  urgent: {
+    label: "Urgent",
+    badge: "bg-red-100 text-red-700",
+    iconBg: "bg-red-100",
+    iconColor: "text-red-600",
+    icon: AlertCircle,
+  },
+  important: {
+    label: "Important",
+    badge: "bg-orange-100 text-orange-700",
+    iconBg: "bg-orange-100",
+    iconColor: "text-orange-600",
+    icon: AlertTriangle,
+  },
+  normal: {
+    label: "Normal",
+    badge: "bg-emerald-100 text-emerald-700",
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-600",
+    icon: Info,
+  },
+};
+
 function PriorityBadge({ priority }: { priority: string }) {
-  if (priority === "urgent") {
-    return (
-      <Badge className="bg-red-100 text-red-700 border-red-200 gap-1" variant="outline">
-        <AlertCircle className="size-3" />
-        Urgent
-      </Badge>
-    );
-  }
-  if (priority === "important") {
-    return (
-      <Badge className="bg-amber-100 text-amber-700 border-amber-200 gap-1" variant="outline">
-        <AlertTriangle className="size-3" />
-        Important
-      </Badge>
-    );
-  }
+  const cfg = priorityConfig[priority] ?? priorityConfig.normal;
+  const Icon = cfg.icon;
   return (
-    <Badge className="bg-green-100 text-green-700 border-green-200 gap-1" variant="outline">
-      <Info className="size-3" />
-      Normal
+    <Badge className={`text-xs gap-1 border-0 ${cfg.badge}`}>
+      <Icon className="size-3" />
+      {cfg.label}
     </Badge>
   );
-}
-
-function priorityIconBg(priority: string) {
-  if (priority === "urgent") return "bg-red-100";
-  if (priority === "important") return "bg-amber-100";
-  return "bg-green-100";
-}
-
-function priorityIconColor(priority: string) {
-  if (priority === "urgent") return "text-red-600";
-  if (priority === "important") return "text-amber-600";
-  return "text-green-600";
 }
 
 export default function NotificationsPage() {
@@ -72,50 +70,51 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-64" />
-        {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-28 rounded-2xl" />
-        ))}
+      <div className="p-8">
+        <div className="mb-8">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="space-y-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 rounded-2xl" />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Notifications</h1>
-        <p className="text-slate-500 mt-1">
-          Announcements and alerts from hostel management
-        </p>
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">Notifications</h1>
+        <p className="text-gray-500 text-sm">Announcements and alerts from hostel management</p>
       </div>
 
-      {/* Count summary */}
+      {/* Summary badges */}
       {notifications.length > 0 && (
-        <div className="flex gap-3 flex-wrap">
-          <div className="text-sm text-slate-500">
-            <span className="font-semibold text-slate-900">{notifications.length}</span>{" "}
-            total notifications
-          </div>
+        <div className="flex items-center gap-3 flex-wrap mb-6">
+          <span className="text-sm text-gray-500">
+            <span className="font-semibold text-gray-900">{notifications.length}</span> total
+          </span>
           {["urgent", "important", "normal"].map((p) => {
             const count = notifications.filter((n) => (n.priority || "normal") === p).length;
             if (!count) return null;
             return (
-              <PriorityBadge key={p} priority={p} />
+              <span key={p} className={`text-xs px-2.5 py-1 rounded-full font-medium ${priorityConfig[p].badge}`}>
+                {count} {priorityConfig[p].label}
+              </span>
             );
           })}
         </div>
       )}
 
-      {/* Notification list */}
       {notifications.length === 0 ? (
         <Card className="rounded-2xl border-0 shadow-sm">
           <CardContent className="py-20 text-center">
-            <Bell className="size-12 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 font-medium">No notifications yet</p>
-            <p className="text-sm text-slate-400 mt-1">
+            <Bell className="size-10 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 font-medium">No notifications yet</p>
+            <p className="text-sm text-gray-400 mt-1">
               You'll see hostel announcements and alerts here.
             </p>
           </CardContent>
@@ -124,6 +123,8 @@ export default function NotificationsPage() {
         <div className="space-y-3">
           {notifications.map((n, idx) => {
             const priority = n.priority || "normal";
+            const cfg = priorityConfig[priority] ?? priorityConfig.normal;
+            const Icon = cfg.icon;
             return (
               <Card
                 key={idx}
@@ -131,30 +132,18 @@ export default function NotificationsPage() {
               >
                 <CardContent className="p-5">
                   <div className="flex items-start gap-4">
-                    {/* Icon */}
-                    <div
-                      className={`size-10 rounded-xl flex items-center justify-center flex-shrink-0 ${priorityIconBg(priority)}`}
-                    >
-                      <Bell className={`size-5 ${priorityIconColor(priority)}`} />
+                    <div className={`size-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.iconBg}`}>
+                      <Icon className={`size-5 ${cfg.iconColor}`} />
                     </div>
-
-                    {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3 flex-wrap">
-                        <p className="font-semibold text-slate-900">{n.title}</p>
+                      <div className="flex items-start justify-between gap-3 flex-wrap mb-1.5">
+                        <p className="font-semibold text-gray-900">{n.title}</p>
                         <PriorityBadge priority={priority} />
                       </div>
-
-                      <p className="text-sm text-slate-600 mt-1.5 leading-relaxed">
-                        {n.message}
-                      </p>
-
-                      <div className="flex items-center gap-3 mt-3 text-xs text-slate-400">
+                      <p className="text-sm text-gray-600 leading-relaxed">{n.message}</p>
+                      <div className="flex items-center gap-3 mt-3 text-xs text-gray-400">
                         <span>
-                          By{" "}
-                          <span className="font-medium text-slate-500">
-                            {n.sentBy}
-                          </span>
+                          By <span className="font-medium text-gray-500">{n.sentBy}</span>
                         </span>
                         <span>·</span>
                         <span>

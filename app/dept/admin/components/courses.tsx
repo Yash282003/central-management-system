@@ -144,26 +144,32 @@ export default function AdminCourses() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} className="rounded-2xl border-0 shadow-sm">
-              <CardContent className="p-5 text-center">
-                <Skeleton className="h-8 w-12 mx-auto mb-2" />
-                <Skeleton className="h-4 w-24 mx-auto" />
-              </CardContent>
-            </Card>
+            <Skeleton key={i} className="h-24 rounded-2xl" />
           ))
         ) : (
-          [
-            { label: "Total Courses", value: courses.length },
-            { label: "Total Credits", value: courses.reduce((a, c) => a + (c.credits || 0), 0) },
-            { label: "Branches Covered", value: new Set(courses.map(c => c.branch)).size },
-          ].map(item => (
-            <Card key={item.label} className="rounded-2xl border-0 shadow-sm">
-              <CardContent className="p-5 text-center">
-                <p className="text-2xl font-bold text-gray-900">{item.value}</p>
-                <p className="text-sm text-gray-500 mt-1">{item.label}</p>
+          <>
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-blue-600 mb-1">Total Courses</p>
+                <p className="text-3xl font-bold text-blue-700">{courses.length}</p>
+                <p className="text-xs text-blue-500 mt-1">across all branches</p>
               </CardContent>
             </Card>
-          ))
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-teal-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-emerald-600 mb-1">Total Credits</p>
+                <p className="text-3xl font-bold text-emerald-700">{courses.reduce((a, c) => a + (c.credits || 0), 0)}</p>
+                <p className="text-xs text-emerald-500 mt-1">credit hours</p>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-violet-50 to-purple-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-violet-600 mb-1">Branches Covered</p>
+                <p className="text-3xl font-bold text-violet-700">{new Set(courses.map(c => c.branch)).size}</p>
+                <p className="text-xs text-violet-500 mt-1">departments</p>
+              </CardContent>
+            </Card>
+          </>
         )}
       </div>
 

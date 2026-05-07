@@ -167,32 +167,32 @@ export default function AdminMembers() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} className="rounded-2xl border-0 shadow-sm">
-              <CardContent className="p-5 flex items-center gap-4">
-                <Skeleton className="size-10 rounded-xl flex-shrink-0" />
-                <div className="flex-1">
-                  <Skeleton className="h-3 w-20 mb-2" />
-                  <Skeleton className="h-6 w-12" />
-                </div>
-              </CardContent>
-            </Card>
+            <Skeleton key={i} className="h-24 rounded-2xl" />
           ))
         ) : (
-          [
-            { label: "Total Faculty", value: teachers.length, icon: <Users className="size-5 text-blue-600" />, bg: "bg-blue-50" },
-            { label: "Departments", value: new Set(teachers.map(t => t.department)).size, icon: <Users className="size-5 text-green-600" />, bg: "bg-green-50" },
-            { label: "Professors", value: teachers.filter(t => t.designation === "Professor").length, icon: <Users className="size-5 text-purple-600" />, bg: "bg-purple-50" },
-          ].map(item => (
-            <Card key={item.label} className="rounded-2xl border-0 shadow-sm">
-              <CardContent className="p-5 flex items-center gap-4">
-                <div className={`size-10 ${item.bg} rounded-xl flex items-center justify-center`}>{item.icon}</div>
-                <div>
-                  <p className="text-xs text-gray-500">{item.label}</p>
-                  <p className="text-xl font-semibold text-gray-900">{item.value}</p>
-                </div>
+          <>
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-blue-600 mb-1">Total Faculty</p>
+                <p className="text-3xl font-bold text-blue-700">{teachers.length}</p>
+                <p className="text-xs text-blue-500 mt-1">faculty members</p>
               </CardContent>
             </Card>
-          ))
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-teal-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-emerald-600 mb-1">Departments</p>
+                <p className="text-3xl font-bold text-emerald-700">{new Set(teachers.map(t => t.department)).size}</p>
+                <p className="text-xs text-emerald-500 mt-1">departments</p>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-violet-50 to-purple-50">
+              <CardContent className="p-5">
+                <p className="text-xs font-medium text-violet-600 mb-1">Professors</p>
+                <p className="text-3xl font-bold text-violet-700">{teachers.filter(t => t.designation === "Professor").length}</p>
+                <p className="text-xs text-violet-500 mt-1">full professors</p>
+              </CardContent>
+            </Card>
+          </>
         )}
       </div>
 

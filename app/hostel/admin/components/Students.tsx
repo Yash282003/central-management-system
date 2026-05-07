@@ -213,7 +213,7 @@ export default function AdminStudents() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" className="bg-indigo-600 text-white hover:bg-indigo-700">
                         View Details
                       </Button>
                     </TableCell>

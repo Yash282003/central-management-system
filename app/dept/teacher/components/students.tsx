@@ -116,7 +116,7 @@ export default function TeacherStudents() {
       if (!res.ok) throw new Error("Failed to submit grade");
       setGradeStudent(null);
       setGradeForm(EMPTY_GRADE);
-      toast.success(`Grade entered for ${gradeStudent.name}`);
+      toast.success(`Grade entered for ${gradeStudent.name?.first} ${gradeStudent.name?.last}`);
     } catch {
       toast.error("Failed to submit grade");
     } finally {
@@ -147,7 +147,7 @@ export default function TeacherStudents() {
       if (!res.ok) throw new Error("Failed to update attendance");
       setAttendanceStudent(null);
       setAttendanceForm(EMPTY_ATTENDANCE);
-      toast.success(`Attendance updated for ${attendanceStudent.name}`);
+      toast.success(`Attendance updated for ${attendanceStudent.name?.first} ${attendanceStudent.name?.last}`);
     } catch {
       toast.error("Failed to update attendance");
     } finally {
@@ -155,8 +155,10 @@ export default function TeacherStudents() {
     }
   }
 
+  const fullName = (s: Student) => `${s.name?.first ?? ""} ${s.name?.last ?? ""}`.trim();
+
   const filtered = students.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    fullName(s).toLowerCase().includes(search.toLowerCase()) ||
     s.regdNo.toLowerCase().includes(search.toLowerCase()) ||
     (s.email ?? "").toLowerCase().includes(search.toLowerCase())
   );
@@ -164,8 +166,8 @@ export default function TeacherStudents() {
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
-  function initials(name: string) {
-    return name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  function initials(s: Student) {
+    return `${s.name?.first?.[0] ?? ""}${s.name?.last?.[0] ?? ""}`.toUpperCase() || "??";
   }
 
   return (
@@ -247,10 +249,10 @@ export default function TeacherStudents() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="size-9 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-700 flex-shrink-0">
-                            {initials(student.name)}
+                            {initials(student)}
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900 text-sm">{student.name}</p>
+                            <p className="font-medium text-gray-900 text-sm">{fullName(student)}</p>
                             {student.email && (
                               <p className="text-xs text-gray-500">{student.email}</p>
                             )}
@@ -355,7 +357,7 @@ export default function TeacherStudents() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Enter Grade</h2>
-                <p className="text-sm text-gray-500">{gradeStudent.name} · {gradeStudent.regdNo}</p>
+                <p className="text-sm text-gray-500">{gradeStudent.name?.first} {gradeStudent.name?.last} · {gradeStudent.regdNo}</p>
               </div>
             </div>
             <div className="space-y-4">
@@ -465,7 +467,7 @@ export default function TeacherStudents() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Update Attendance</h2>
-                <p className="text-sm text-gray-500">{attendanceStudent.name} · {attendanceStudent.regdNo}</p>
+                <p className="text-sm text-gray-500">{attendanceStudent.name?.first} {attendanceStudent.name?.last} · {attendanceStudent.regdNo}</p>
               </div>
             </div>
             <div className="space-y-4">

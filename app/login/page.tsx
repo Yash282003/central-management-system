@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, GraduationCap, BookOpen, Shield } from "lucide-react";
 import { Loginstudent } from "@/services/student/login";
 import { Loginteacher } from "@/services/teacher/login";
@@ -51,9 +51,13 @@ const roleConfig = {
   },
 } as const;
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
-  const [role, setRole] = useState<Role>("student");
+  const searchParams = useSearchParams();
+  const [role, setRole] = useState<Role>(() => {
+    const r = searchParams.get("role");
+    return (r === "teacher" || r === "admin") ? r : "student";
+  });
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -214,5 +218,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageInner />
+    </Suspense>
   );
 }

@@ -69,7 +69,7 @@ export default function Home() {
       </div>
 
       <p className="relative text-center text-xs text-gray-400 mt-10">
-        Or <button className="text-blue-600 hover:underline font-medium" onClick={() => router.push("/dept/login")}>sign in with your credentials</button>
+        Or <button className="text-blue-600 hover:underline font-medium" onClick={() => router.push("/login")}>sign in with your credentials</button>
       </p>
     </div>
   );

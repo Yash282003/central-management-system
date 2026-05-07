@@ -40,8 +40,16 @@ export const notifications = [
   { id: 4, title: "Fee Payment Reminder", message: "Last date to pay fees: March 31", category: "alert", time: "2 days ago", read: true },
   { id: 5, title: "New Message", message: "Dr. Carter sent you a message", category: "message", time: "3 days ago", read: true },
 ];
+type Priority = "high" | "medium" | "low";
 
-export const notices = [
+export const notices: {
+  id: number;
+  title: string;
+  content: string;
+  date: string;
+  priority: Priority;
+  author: string;
+}[] = [
   { id: 1, title: "Mid-Semester Exam Schedule", content: "Mid-semester exams will be conducted from April 10-20, 2026", date: "2026-03-28", priority: "high", author: "Admin Office" },
   { id: 2, title: "Workshop on Machine Learning", content: "Join us for an intensive ML workshop this Saturday", date: "2026-03-27", priority: "medium", author: "Dr. Sarah Johnson" },
   { id: 3, title: "Holiday Notice", content: "University will remain closed on April 1st", date: "2026-03-25", priority: "low", author: "Admin Office" },

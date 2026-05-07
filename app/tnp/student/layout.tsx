@@ -103,7 +103,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
       {/* ✅ Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b border-gray-200">
-          <h1 className="text-xl font-semibold text-indigo-600">CPMS</h1>
+          <h1 className="text-xl font-semibold text-indigo-600">UPMS</h1>
           <p className="text-sm text-gray-500">Student Portal</p>
         </div>
 

@@ -38,6 +38,7 @@ export async function GET(request) {
       
     });
   } catch (error) {
+      console.log("JWT ERROR:", error.message); // 👈 ADD THIS
     return NextResponse.json(
       { success: false, message: "Invalid token" },
       { status: 401 }

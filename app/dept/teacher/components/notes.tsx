@@ -79,7 +79,11 @@ export default function TeacherNotes() {
       const res = await fetch("/api/dept/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, branch: teacher.department }),
+        body: JSON.stringify({
+          ...form,
+          uploadedByName: `${teacher.name.first} ${teacher.name.last}`,
+          branch: teacher.department,
+        }),
       });
       if (!res.ok) throw new Error("Failed to upload note");
       const data = await res.json();

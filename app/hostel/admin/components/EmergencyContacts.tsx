@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -16,11 +17,10 @@ import { Phone, Plus, Trash2, ShieldCheck, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 interface Contact {
-  id: number;
+  _id: string;
   name: string;
   role: string;
-  phone: string;
-  email: string;
+  mobile: string;
   available24x7?: boolean;
 }
 
@@ -38,55 +38,73 @@ function roleColor(role: string) {
 }
 
 function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 }
 
+const EMPTY_FORM = { name: "", role: "", mobile: "", available24x7: false };
+
 export default function AdminEmergencyContacts() {
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [form, setForm] = useState({ name: "", role: "", phone: "", email: "", available24x7: false });
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
 
-  const [contacts, setContacts] = useState<Contact[]>([
-    { id: 1, name: "Dr. Rajesh Kumar", role: "Warden", phone: "+91 98765 43210", email: "warden.ganga@university.edu", available24x7: true },
-    { id: 2, name: "Mr. Suresh Patel", role: "Assistant Warden", phone: "+91 98765 43211", email: "asst.warden@university.edu" },
-    { id: 3, name: "Mr. Anil Sharma", role: "Hall Assistant", phone: "+91 98765 43212", email: "hall.assistant@university.edu" },
-    { id: 4, name: "University Hospital", role: "Medical Emergency", phone: "+91 98765 43220", email: "hospital@university.edu", available24x7: true },
-    { id: 5, name: "Campus Security", role: "Security", phone: "+91 98765 43230", email: "security@university.edu", available24x7: true },
-  ]);
+  useEffect(() => {
+    fetchContacts();
+  }, []);
 
-  const resetForm = () => {
-    setForm({ name: "", role: "", phone: "", email: "", available24x7: false });
-  };
+  async function fetchContacts() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/hostel/admin/contacts");
+      const json = await res.json();
+      setContacts(Array.isArray(json.data) ? json.data : []);
+    } catch {
+      toast.error("Failed to load contacts");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const handleSave = () => {
-    if (!form.name.trim() || !form.role.trim() || !form.phone.trim()) {
+  async function handleSave() {
+    if (!form.name.trim() || !form.role.trim() || !form.mobile.trim()) {
       toast.error("Name, role, and phone are required");
       return;
     }
-    const newContact: Contact = {
-      id: Date.now(),
-      name: form.name,
-      role: form.role,
-      phone: form.phone,
-      email: form.email,
-      available24x7: form.available24x7,
-    };
-    setContacts((prev) => [...prev, newContact]);
-    resetForm();
-    setIsDialogOpen(false);
-    toast.success("Contact added successfully");
-  };
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/hostel/admin/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message);
+      setContacts((prev) => [json.data, ...prev]);
+      setForm(EMPTY_FORM);
+      setIsDialogOpen(false);
+      toast.success("Contact added successfully");
+    } catch {
+      toast.error("Failed to add contact");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
-  const handleDelete = (id: number) => {
-    setContacts((prev) => prev.filter((c) => c.id !== id));
-    setDeleteId(null);
-    toast.success("Contact deleted");
-  };
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`/api/hostel/admin/contacts?id=${id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!json.success) throw new Error();
+      setContacts((prev) => prev.filter((c) => c._id !== id));
+      setDeleteId(null);
+      toast.success("Contact deleted");
+    } catch {
+      toast.error("Failed to delete contact");
+    }
+  }
 
   return (
     <div className="p-8">
@@ -96,7 +114,7 @@ export default function AdminEmergencyContacts() {
           <p className="text-gray-500 text-sm">Manage emergency contact information for hostel students</p>
         </div>
         <Button
-          onClick={() => { resetForm(); setIsDialogOpen(true); }}
+          onClick={() => { setForm(EMPTY_FORM); setIsDialogOpen(true); }}
           className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2"
         >
           <Plus className="size-4" />
@@ -105,35 +123,44 @@ export default function AdminEmergencyContacts() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-teal-50">
-          <CardContent className="p-5">
-            <p className="text-xs font-medium text-emerald-600 mb-1">Total Contacts</p>
-            <p className="text-3xl font-bold text-emerald-700">{contacts.length}</p>
-            <p className="text-xs text-emerald-500 mt-1">in directory</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
-          <CardContent className="p-5">
-            <p className="text-xs font-medium text-blue-600 mb-1">24x7 Available</p>
-            <p className="text-3xl font-bold text-blue-700">
-              {contacts.filter((c) => c.available24x7).length}
-            </p>
-            <p className="text-xs text-blue-500 mt-1">always reachable</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-violet-50 to-purple-50">
-          <CardContent className="p-5">
-            <p className="text-xs font-medium text-violet-600 mb-1">Roles Covered</p>
-            <p className="text-3xl font-bold text-violet-700">
-              {new Set(contacts.map((c) => c.role)).size}
-            </p>
-            <p className="text-xs text-violet-500 mt-1">unique roles</p>
-          </CardContent>
-        </Card>
-      </div>
+      {!loading && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-teal-50">
+            <CardContent className="p-5">
+              <p className="text-xs font-medium text-emerald-600 mb-1">Total Contacts</p>
+              <p className="text-3xl font-bold text-emerald-700">{contacts.length}</p>
+              <p className="text-xs text-emerald-500 mt-1">in directory</p>
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-blue-50 to-indigo-50">
+            <CardContent className="p-5">
+              <p className="text-xs font-medium text-blue-600 mb-1">24×7 Available</p>
+              <p className="text-3xl font-bold text-blue-700">
+                {contacts.filter((c) => c.available24x7).length}
+              </p>
+              <p className="text-xs text-blue-500 mt-1">always reachable</p>
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-violet-50 to-purple-50">
+            <CardContent className="p-5">
+              <p className="text-xs font-medium text-violet-600 mb-1">Roles Covered</p>
+              <p className="text-3xl font-bold text-violet-700">
+                {new Set(contacts.map((c) => c.role)).size}
+              </p>
+              <p className="text-xs text-violet-500 mt-1">unique roles</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      {contacts.length === 0 ? (
+      {/* Contact grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-48 rounded-2xl" />
+          ))}
+        </div>
+      ) : contacts.length === 0 ? (
         <div className="py-20 text-center">
           <Phone className="size-10 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 font-medium">No emergency contacts yet</p>
@@ -142,7 +169,7 @@ export default function AdminEmergencyContacts() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {contacts.map((contact) => (
-            <Card key={contact.id} className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow">
+            <Card key={contact._id} className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -157,7 +184,7 @@ export default function AdminEmergencyContacts() {
                     </div>
                   </div>
                   <button
-                    onClick={() => setDeleteId(contact.id)}
+                    onClick={() => setDeleteId(contact._id)}
                     className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 className="size-4" />
@@ -173,32 +200,21 @@ export default function AdminEmergencyContacts() {
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <a
-                    href={`tel:${contact.phone}`}
-                    className="flex items-center gap-2 w-full justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium py-2 px-4 rounded-xl transition-colors"
-                  >
-                    <Phone className="size-4" />
-                    {contact.phone}
-                  </a>
-                  {contact.email && (
-                    <a
-                      href={`mailto:${contact.email}`}
-                      className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                    >
-                      <Mail className="size-3.5 text-gray-400" />
-                      <span className="truncate">{contact.email}</span>
-                    </a>
-                  )}
-                </div>
+                <a
+                  href={`tel:${contact.mobile}`}
+                  className="flex items-center gap-2 w-full justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium py-2 px-4 rounded-xl transition-colors"
+                >
+                  <Phone className="size-4" />
+                  {contact.mobile}
+                </a>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
 
-      {/* Add Contact Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={(o) => { setIsDialogOpen(o); if (!o) resetForm(); }}>
+      {/* Add Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={(o) => { setIsDialogOpen(o); if (!o) setForm(EMPTY_FORM); }}>
         <DialogContent className="max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">Add Emergency Contact</DialogTitle>
@@ -214,7 +230,7 @@ export default function AdminEmergencyContacts() {
               />
             </div>
             <div>
-              <Label className="text-sm font-medium text-gray-700">Role/Designation *</Label>
+              <Label className="text-sm font-medium text-gray-700">Role / Designation *</Label>
               <Input
                 className="rounded-xl mt-1"
                 placeholder="e.g., Warden"
@@ -227,18 +243,8 @@ export default function AdminEmergencyContacts() {
               <Input
                 className="rounded-xl mt-1"
                 placeholder="e.g., +91 98765 43210"
-                value={form.phone}
-                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-700">Email (optional)</Label>
-              <Input
-                className="rounded-xl mt-1"
-                type="email"
-                placeholder="e.g., warden@university.edu"
-                value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                value={form.mobile}
+                onChange={(e) => setForm((f) => ({ ...f, mobile: e.target.value }))}
               />
             </div>
             <div className="flex items-center gap-3">
@@ -260,15 +266,16 @@ export default function AdminEmergencyContacts() {
             </Button>
             <Button
               onClick={handleSave}
+              disabled={submitting}
               className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
             >
-              Add Contact
+              {submitting ? "Adding..." : "Add Contact"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation */}
       <Dialog open={deleteId !== null} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
         <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
@@ -277,9 +284,9 @@ export default function AdminEmergencyContacts() {
           <p className="text-gray-600 text-sm">
             Are you sure you want to remove{" "}
             <span className="font-semibold text-gray-900">
-              {contacts.find((c) => c.id === deleteId)?.name}
+              {contacts.find((c) => c._id === deleteId)?.name}
             </span>
-            ? This action cannot be undone.
+            ? Students will no longer see this contact.
           </p>
           <DialogFooter className="gap-2 mt-2">
             <Button variant="outline" onClick={() => setDeleteId(null)} className="rounded-xl">
@@ -290,7 +297,7 @@ export default function AdminEmergencyContacts() {
               onClick={() => deleteId && handleDelete(deleteId)}
               className="rounded-xl"
             >
-              Delete Contact
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

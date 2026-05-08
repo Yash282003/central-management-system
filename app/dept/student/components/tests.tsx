@@ -12,9 +12,8 @@ interface Test {
   title: string;
   subject: string;
   date: string;
-  duration?: string;
-  totalMarks: number;
-  status: "upcoming" | "completed";
+  duration?: number;
+  maxMarks: number;
   obtainedMarks?: number;
 }
 
@@ -62,8 +61,9 @@ export default function StudentTests() {
     load();
   }, []);
 
-  const upcoming = tests.filter((t) => t.status === "upcoming");
-  const past = tests.filter((t) => t.status === "completed");
+  const now = new Date();
+  const upcoming = tests.filter((t) => new Date(t.date) > now);
+  const past = tests.filter((t) => new Date(t.date) <= now);
   const activePolls = polls.filter((p) => p.status === "active");
   const closedPolls = polls.filter((p) => p.status === "closed");
 
@@ -137,12 +137,12 @@ export default function StudentTests() {
                       {test.duration && (
                         <div className="flex items-center gap-2.5 text-xs text-gray-600">
                           <Clock className="size-3.5 text-gray-400" />
-                          <span>{test.duration}</span>
+                          <span>{test.duration} min</span>
                         </div>
                       )}
                       <div className="flex items-center gap-2.5 text-xs text-gray-600">
                         <Trophy className="size-3.5 text-gray-400" />
-                        <span>{test.totalMarks} marks</span>
+                        <span>{test.maxMarks} marks</span>
                       </div>
                     </div>
                   </CardContent>
@@ -167,7 +167,7 @@ export default function StudentTests() {
           ) : (
             past.map((test) => {
               const obtained = test.obtainedMarks ?? 0;
-              const pct = test.totalMarks > 0 ? (obtained / test.totalMarks) * 100 : 0;
+              const pct = test.maxMarks > 0 ? (obtained / test.maxMarks) * 100 : 0;
               const resultColor =
                 pct >= 80 ? "bg-emerald-100 text-emerald-700" :
                 pct >= 60 ? "bg-blue-100 text-blue-700" :
@@ -188,7 +188,7 @@ export default function StudentTests() {
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0 ml-3">
-                        <p className="text-xl font-bold text-gray-900">{obtained}/{test.totalMarks}</p>
+                        <p className="text-xl font-bold text-gray-900">{obtained}/{test.maxMarks}</p>
                         <Badge className={`text-xs border-0 ${resultColor}`}>{resultLabel}</Badge>
                       </div>
                     </div>

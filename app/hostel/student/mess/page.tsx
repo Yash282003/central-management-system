@@ -31,7 +31,7 @@ export default function MessMenuPage() {
       try {
         const res = await fetch("/api/hostel/student/mess");
         const data = await res.json();
-        setMenu(Array.isArray(data) ? data : []);
+        setMenu(Array.isArray(data.data) ? data.data : []);
       } catch {
         setMenu([]);
       } finally {

@@ -32,6 +32,7 @@ const menuItems = {
     { icon: BarChart3, label: "Grades", path: "/dept/student/grades" },
     { icon: Calendar, label: "Attendance", path: "/dept/student/attendance" },
     { icon: ClipboardList, label: "Tests & Polls", path: "/dept/student/student_tests" },
+    { icon: BookMarked, label: "Notes", path: "/dept/student/notes" },
     { icon: Building, label: "Department", path: "/dept/student/department" },
     { icon: UserCircle, label: "Profile", path: "/dept/student/profile" },
   ],

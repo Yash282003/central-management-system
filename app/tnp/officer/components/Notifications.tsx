@@ -116,7 +116,7 @@ export default function OfficerNotifications() {
                   />
                 </div>
 
-                <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                <Button className="cursor-pointer w-full text-white bg-indigo-600 hover:bg-indigo-700">
                   <Send className="w-4 h-4 mr-2" />
                   Send Announcement
                 </Button>
@@ -200,7 +200,7 @@ export default function OfficerNotifications() {
                   </p>
                 </div>
 
-                <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                <Button className="w-full text-white cursor-pointer bg-indigo-600 hover:bg-indigo-700">
                   <Send className="w-4 h-4 mr-2" />
                   Send Participation Request
                 </Button>

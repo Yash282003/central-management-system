@@ -139,7 +139,7 @@ export default function StudentApplications() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button className="bg-indigo-600 text-white hover:bg-indigo-700" size="sm">
                       View Details
                     </Button>
                     {app.status === 'Applied' && (

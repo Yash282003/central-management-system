@@ -25,7 +25,7 @@ const studentSchema = new Schema(
     branch: {
       type: String,
       required: [true, "Branch is required"],
-      enum: ["CSE", "IT", "ECE", "EEE", "MECH", "CIVIL"], // modify as needed
+      enum: ["CSE", "IT", "ECE", "EEE", "MECH", "CIVIL"],
     },
 
     mobile: {
@@ -52,13 +52,42 @@ const studentSchema = new Schema(
       required: [true, "Date of Birth is required"],
     },
 
+    cgpa: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 10,
+    },
+
+    status: {
+      type: String,
+      enum: ["PLACED", "UNPLACED", "INELIGIBLE"],
+      default: "UNPLACED",
+    },
+
+    companyName: {
+      type: String,
+      default: null,
+    },
+
+    package: {
+      type: Number, // in LPA
+      default: 0,
+    },
+
+    hostel: {
+      hostelName: {
+        type: String,
+      },
+      roomNumber: {
+        type: String,
+      },
+    },
+
     profileUrl: {
       type: String,
     },
-    hostelRoom: { type: String },
-    roomNo: {
-      type: String,
-    },
+
     address: {
       type: String,
       required: [true, "Address is required"],

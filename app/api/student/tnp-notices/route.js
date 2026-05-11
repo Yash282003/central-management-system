@@ -29,6 +29,7 @@ export async function GET(request) {
       );
     }
 
+    const studentStatus = student.status || "UNPLACED";
     const now = new Date();
     const notices = await TnpNotice.find({
       $and: [
@@ -41,7 +42,7 @@ export async function GET(request) {
         {
           $or: [
             { targetStatus: "ALL" },
-            { targetStatus: student.status },
+            { targetStatus: studentStatus },
           ],
         },
         {

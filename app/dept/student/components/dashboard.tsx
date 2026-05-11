@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { statsData, notices, timetable } from "../../data/mockdata";
 import { getDetails } from "@/services/student/me/getDetails";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,6 +25,7 @@ interface Student {
   dob: string;
   address: string;
   profileUrl: string;
+  cgpa?: number;
   name: { first: string; middle: string; last: string };
 }
 
@@ -63,6 +63,7 @@ export default function StudentDashboard() {
   const [user, setUser] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [openNotice, setOpenNotice] = useState<number | null>(null);
+  const [recentNotices, setRecentNotices] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -74,15 +75,14 @@ export default function StudentDashboard() {
       }
     };
     loadData();
+
+    fetch("/api/dept/notices", { credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setRecentNotices((d.data ?? []).slice(0, 3)); })
+      .catch(() => {});
   }, []);
 
-  const stats = statsData.student;
-  const recentNotices = notices.slice(0, 3);
-
-  const cgpaCount = useCounter(loading ? 0 : (stats.currentCGPA as number));
-  const attendanceCount = useCounter(loading ? 0 : (stats.averageAttendance as number));
-  const coursesCount = useCounter(loading ? 0 : (stats.totalCourses as number));
-  const testsCount = useCounter(loading ? 0 : (stats.upcomingTests as number));
+  const cgpaCount = useCounter(loading ? 0 : (user?.cgpa ?? 0));
 
   return (
     <div className="p-8">
@@ -119,7 +119,9 @@ export default function StudentDashboard() {
             >
               <CardContent className="p-5">
                 <p className="text-xs font-medium text-blue-600 mb-1">CURRENT CGPA</p>
-                <p className="text-3xl font-bold text-blue-700">{cgpaCount.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-blue-700">
+                  {user?.cgpa != null ? cgpaCount.toFixed(2) : "—"}
+                </p>
                 <p className="text-xs text-blue-500 mt-1">out of 10.0</p>
               </CardContent>
             </Card>
@@ -129,7 +131,7 @@ export default function StudentDashboard() {
             >
               <CardContent className="p-5">
                 <p className="text-xs font-medium text-emerald-600 mb-1">AVG ATTENDANCE</p>
-                <p className="text-3xl font-bold text-emerald-700">{Math.floor(attendanceCount)}%</p>
+                <p className="text-3xl font-bold text-emerald-700">—</p>
                 <p className="text-xs text-emerald-500 mt-1">across all courses</p>
               </CardContent>
             </Card>
@@ -139,7 +141,7 @@ export default function StudentDashboard() {
             >
               <CardContent className="p-5">
                 <p className="text-xs font-medium text-violet-600 mb-1">TOTAL COURSES</p>
-                <p className="text-3xl font-bold text-violet-700">{Math.floor(coursesCount)}</p>
+                <p className="text-3xl font-bold text-violet-700">—</p>
                 <p className="text-xs text-violet-500 mt-1">enrolled this term</p>
               </CardContent>
             </Card>
@@ -149,7 +151,7 @@ export default function StudentDashboard() {
             >
               <CardContent className="p-5">
                 <p className="text-xs font-medium text-amber-600 mb-1">UPCOMING TESTS</p>
-                <p className="text-3xl font-bold text-amber-700">{Math.floor(testsCount)}</p>
+                <p className="text-3xl font-bold text-amber-700">—</p>
                 <p className="text-xs text-amber-500 mt-1">in the next 14 days</p>
               </CardContent>
             </Card>
@@ -196,7 +198,9 @@ export default function StudentDashboard() {
                         <p className={`text-xs text-gray-500 mt-1 ${open ? "" : "line-clamp-1"}`}>
                           {notice.content}
                         </p>
-                        <p className="text-[11px] text-gray-400 mt-1">{notice.date}</p>
+                        <p className="text-[11px] text-gray-400 mt-1">
+                          {new Date(notice.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                        </p>
                       </div>
                       <ChevronRight
                         className={`size-4 text-gray-300 mt-0.5 transition-transform ${open ? "rotate-90" : ""}`}

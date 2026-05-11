@@ -140,7 +140,7 @@ export default function StudentApplications() {
 
       {/* Timeline — only shown when there are real applications */}
       {!loading && applications.length > 0 && (
-        <Card>
+        <Card className="border-gray-200">
           <CardHeader>
             <CardTitle>Application Timeline</CardTitle>
           </CardHeader>

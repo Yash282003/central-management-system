@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { FileText, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 
@@ -111,20 +112,20 @@ export default function OfficerReports() {
           </Card>
           <Card className="border-gray-200">
             <CardContent className="p-6">
-              <p className="text-sm text-gray-600 mb-1">Downloaded Today</p>
-              <p className="text-3xl font-bold text-green-600">12</p>
+              <p className="text-sm text-gray-600 mb-1">CSV Formats</p>
+              <p className="text-3xl font-bold text-green-600">{reports.filter(r => r.formats.includes('CSV')).length}</p>
             </CardContent>
           </Card>
           <Card className="border-gray-200">
             <CardContent className="p-6">
-              <p className="text-sm text-gray-600 mb-1">Last Generated</p>
-              <p className="text-sm font-medium text-gray-900 mt-2">March 10, 2026</p>
+              <p className="text-sm text-gray-600 mb-1">Filters Available</p>
+              <p className="text-sm font-medium text-gray-900 mt-2">Branch + Type</p>
             </CardContent>
           </Card>
           <Card className="border-gray-200">
             <CardContent className="p-6">
-              <p className="text-sm text-gray-600 mb-1">Auto-Refresh</p>
-              <p className="text-sm font-medium text-gray-900 mt-2">Daily at 6 AM</p>
+              <p className="text-sm text-gray-600 mb-1">Data Source</p>
+              <p className="text-sm font-medium text-gray-900 mt-2">Live Database</p>
             </CardContent>
           </Card>
         </div>
@@ -155,6 +156,7 @@ export default function OfficerReports() {
                       className="border-indigo-200 text-indigo-600 hover:bg-indigo-50"
                       onClick={format === "CSV" && report.csvUrl ? () => downloadCSV(report.csvUrl!, report.csvFile!) : undefined}
                       disabled={format !== "CSV"}
+                      title={format !== "CSV" ? "PDF export coming soon" : undefined}
                     >
                       <Download className="w-3 h-3 mr-1" />
                       {format}
@@ -179,39 +181,46 @@ export default function OfficerReports() {
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-900 block mb-2">Report Type</label>
-                  <select
-                    className="w-full p-2 border border-gray-200 rounded-lg"
-                    value={reportType}
-                    onChange={(e) => setReportType(e.target.value)}
-                  >
-                    <option>Placement Statistics</option>
-                    <option>Student Data</option>
-                    <option>Company Data</option>
-                    <option>Drive Analytics</option>
-                  </select>
+                  <Select value={reportType} onValueChange={setReportType}>
+                    <SelectTrigger className="border-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Placement Statistics">Placement Statistics</SelectItem>
+                      <SelectItem value="Student Data">Student Data</SelectItem>
+                      <SelectItem value="Company Data">Company Data</SelectItem>
+                      <SelectItem value="Drive Analytics">Drive Analytics</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-900 block mb-2">Branch Filter</label>
-                  <select
-                    className="w-full p-2 border border-gray-200 rounded-lg"
-                    value={branch}
-                    onChange={(e) => setBranch(e.target.value)}
-                  >
-                    <option>All Branches</option>
-                    <option>CSE</option>
-                    <option>ECE</option>
-                    <option>IT</option>
-                    <option>MECH</option>
-                  </select>
+                  <Select value={branch} onValueChange={setBranch}>
+                    <SelectTrigger className="border-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All Branches">All Branches</SelectItem>
+                      <SelectItem value="CSE">CSE</SelectItem>
+                      <SelectItem value="ECE">ECE</SelectItem>
+                      <SelectItem value="IT">IT</SelectItem>
+                      <SelectItem value="MECH">MECH</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-900 block mb-2">Date Range</label>
-                  <select className="w-full p-2 border border-gray-200 rounded-lg">
-                    <option>Current Year</option>
-                    <option>Last 6 Months</option>
-                    <option>Last 3 Months</option>
-                    <option>Custom Range</option>
-                  </select>
+                  <Select defaultValue="Current Year">
+                    <SelectTrigger className="border-gray-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Current Year">Current Year</SelectItem>
+                      <SelectItem value="Last 6 Months">Last 6 Months</SelectItem>
+                      <SelectItem value="Last 3 Months">Last 3 Months</SelectItem>
+                      <SelectItem value="Custom Range">Custom Range</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -227,52 +236,6 @@ export default function OfficerReports() {
           </CardContent>
         </Card>
 
-        {/* Recent Downloads */}
-        <Card className="border-gray-200">
-          <CardHeader>
-            <CardTitle>Recent Downloads</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Overall_Placement_Report_2024.pdf</p>
-                    <p className="text-xs text-gray-500">Downloaded 2 hours ago</p>
-                  </div>
-                </div>
-                <Button size="sm" variant="ghost">
-                  <Download className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Branch_Wise_Report_CSE.csv</p>
-                    <p className="text-xs text-gray-500">Downloaded yesterday</p>
-                  </div>
-                </div>
-                <Button size="sm" variant="ghost">
-                  <Download className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Student_Placement_List.xlsx</p>
-                    <p className="text-xs text-gray-500">Downloaded 2 days ago</p>
-                  </div>
-                </div>
-                <Button size="sm" variant="ghost">
-                  <Download className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
    
   );

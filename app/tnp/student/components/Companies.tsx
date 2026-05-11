@@ -127,7 +127,12 @@ export default function StudentCompanies() {
       )}
 
       {!loading && filtered.length === 0 && (
-        <p className="text-center text-gray-400 py-16">No companies found.</p>
+        <Card className="border-gray-200">
+          <CardContent className="py-16 text-center text-gray-400">
+            <p className="font-medium">No companies found.</p>
+            <p className="text-sm mt-1">Check back later or try a different search.</p>
+          </CardContent>
+        </Card>
       )}
 
       {!loading && (

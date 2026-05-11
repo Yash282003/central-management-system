@@ -119,10 +119,17 @@ export default function StudentDashboard() {
             >
               <CardContent className="p-5">
                 <p className="text-xs font-medium text-blue-600 mb-1">CURRENT CGPA</p>
-                <p className="text-3xl font-bold text-blue-700">
-                  {user?.cgpa != null ? cgpaCount.toFixed(2) : "—"}
-                </p>
-                <p className="text-xs text-blue-500 mt-1">out of 10.0</p>
+                {user?.cgpa != null ? (
+                  <>
+                    <p className="text-3xl font-bold text-blue-700">{cgpaCount.toFixed(2)}</p>
+                    <p className="text-xs text-blue-500 mt-1">out of 10.0</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold text-blue-700/80 leading-tight">Grades coming soon</p>
+                    <p className="text-xs text-blue-500 mt-1.5">Your teacher will publish them shortly.</p>
+                  </>
+                )}
               </CardContent>
             </Card>
             <Card

@@ -29,7 +29,6 @@ interface FormData {
   lastName: string;
   registrationNumber: string;
   branch: string;
-  cgpa: string;
   mobile: string;
   email: string;
   password: string;
@@ -65,12 +64,6 @@ function validate(data: FormData, step: number): FieldError {
     if (!data.registrationNumber.trim())
       errors.registrationNumber = "Registration number is required.";
     if (!data.branch) errors.branch = "Please select a branch.";
-    if (!data.cgpa.trim()) errors.cgpa = "CGPA is required.";
-    else {
-      const n = parseFloat(data.cgpa);
-      if (isNaN(n) || n < 0 || n > 10)
-        errors.cgpa = "CGPA must be between 0 and 10.";
-    }
   }
 
   if (step === 3) {
@@ -181,7 +174,6 @@ export default function SignupPage() {
     lastName: "",
     registrationNumber: "",
     branch: "",
-    cgpa: "",
     mobile: "",
     email: "",
     password: "",
@@ -238,7 +230,6 @@ export default function SignupPage() {
         },
         regdNo: form.registrationNumber,
         branch: form.branch,
-        cgpa: form.cgpa,
         mobile: form.mobile,
         email: form.email,
         password: form.password,
@@ -455,17 +446,10 @@ export default function SignupPage() {
                   </p>
                 )}
               </div>
-              <InputField
-                id="cgpa"
-                label="CGPA"
-                type="number"
-                value={form.cgpa}
-                onChange={set("cgpa")}
-                placeholder="e.g. 8.5"
-                icon={GraduationCap}
-                error={errors.cgpa}
-                required
-              />
+              <p className="text-xs text-gray-500 mt-1">
+                Your CGPA is set by your teacher once grades are published.
+                You don&apos;t need to enter it here.
+              </p>
             </>
           )}
 

@@ -54,9 +54,9 @@ const studentSchema = new Schema(
 
     cgpa: {
       type: Number,
-      required: true,
       min: 0,
       max: 10,
+      default: null,
     },
 
     status: {

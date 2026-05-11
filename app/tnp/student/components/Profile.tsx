@@ -238,9 +238,9 @@ export default function StudentProfile() {
                     <Label>CGPA</Label>
                     <Input
                       className="mt-1"
-                      value={user.cgpa ?? ''}
+                      value={user.cgpa != null ? String(user.cgpa) : ''}
                       readOnly
-                      placeholder="—"
+                      placeholder="Grades not published yet"
                     />
                   </div>
                   <div>

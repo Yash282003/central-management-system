@@ -17,7 +17,6 @@ export async function POST(request) {
       email,
       password,
       dob,
-      cgpa,
       profileUrl,
       address,
     } = body;
@@ -46,10 +45,6 @@ export async function POST(request) {
     if (!dob) {
       return NextResponse.json({ message: "Date of birth is required" }, { status: 400 });
     }
-    const cgpaNum = parseFloat(cgpa);
-    if (isNaN(cgpaNum) || cgpaNum < 0 || cgpaNum > 10) {
-      return NextResponse.json({ message: "CGPA must be a number between 0 and 10" }, { status: 400 });
-    }
     if (!address?.trim()) {
       return NextResponse.json({ message: "Address is required" }, { status: 400 });
     }
@@ -71,7 +66,6 @@ export async function POST(request) {
       email: email.trim().toLowerCase(),
       password: hashedPassword,
       dob: new Date(dob),
-      cgpa: cgpaNum,
       status: "UNPLACED",
       profileUrl: profileUrl || undefined,
       address: address.trim(),

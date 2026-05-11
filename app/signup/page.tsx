@@ -29,6 +29,7 @@ interface FormData {
   lastName: string;
   registrationNumber: string;
   branch: string;
+  cgpa: string;
   mobile: string;
   email: string;
   password: string;
@@ -64,6 +65,12 @@ function validate(data: FormData, step: number): FieldError {
     if (!data.registrationNumber.trim())
       errors.registrationNumber = "Registration number is required.";
     if (!data.branch) errors.branch = "Please select a branch.";
+    if (!data.cgpa.trim()) errors.cgpa = "CGPA is required.";
+    else {
+      const n = parseFloat(data.cgpa);
+      if (isNaN(n) || n < 0 || n > 10)
+        errors.cgpa = "CGPA must be between 0 and 10.";
+    }
   }
 
   if (step === 3) {
@@ -171,9 +178,10 @@ export default function SignupPage() {
   const [form, setForm] = useState<FormData>({
     firstName: "",
     middleName: "",
-    lastName: "", 
+    lastName: "",
     registrationNumber: "",
     branch: "",
+    cgpa: "",
     mobile: "",
     email: "",
     password: "",
@@ -182,6 +190,7 @@ export default function SignupPage() {
     profileImage: "",
     address: "",
   });
+  const [submitError, setSubmitError] = useState("");
 
   const set = (key: keyof FormData) => (val: string) => {
     setForm((f) => ({ ...f, [key]: val }));
@@ -213,33 +222,44 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError("");
     const errs = validate(form, step);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
     setLoading(true);
-    try{
+    try {
       const payload = {
-      name: {
-        first: form.firstName,
-        middle: form.middleName,
-        last: form.lastName,
-      },
-      regdNo: form.registrationNumber,   // ✅ FIXED
-      branch: form.branch,
-      mobile: form.mobile,
-      email: form.email,
-      password: form.password,
-      dob: form.dob,
-      profileUrl: form.profileImage,     // ✅ FIXED
-      address: form.address,
+        name: {
+          first: form.firstName,
+          middle: form.middleName,
+          last: form.lastName,
+        },
+        regdNo: form.registrationNumber,
+        branch: form.branch,
+        cgpa: form.cgpa,
+        mobile: form.mobile,
+        email: form.email,
+        password: form.password,
+        dob: form.dob,
+        profileUrl: form.profileImage || undefined,
+        address: form.address,
       };
-const result = await Signupstudent(payload);
-      console.log(result);
+      const result = await Signupstudent(payload);
+      if (result?.success === false || result?.message) {
+        setSubmitError(result.message || "Signup failed. Please try again.");
+        return;
+      }
       setSuccess(true);
-    }catch(error){
-      console.log(error);
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Network error. Please try again.";
+      setSubmitError(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -435,6 +455,17 @@ const result = await Signupstudent(payload);
                   </p>
                 )}
               </div>
+              <InputField
+                id="cgpa"
+                label="CGPA"
+                type="number"
+                value={form.cgpa}
+                onChange={set("cgpa")}
+                placeholder="e.g. 8.5"
+                icon={GraduationCap}
+                error={errors.cgpa}
+                required
+              />
             </>
           )}
 
@@ -657,6 +688,13 @@ const result = await Signupstudent(payload);
                 )}
               </div>
             </>
+          )}
+
+          {submitError && (
+            <div className="flex items-start gap-2 px-3 py-2.5 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
+              <AlertCircle className="size-4 shrink-0 mt-0.5" />
+              <span>{submitError}</span>
+            </div>
           )}
 
           {/* Navigation buttons */}

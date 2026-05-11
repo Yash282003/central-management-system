@@ -7,11 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getDetails } from "@/services/student/me/getDetails";
 
-// ✅ Type
 interface Student {
   _id: string;
   regdNo: string;
@@ -21,6 +20,10 @@ interface Student {
   dob: string;
   address: string;
   profileUrl: string;
+  cgpa?: number;
+  status?: string;
+  companyName?: string;
+  package?: number;
   name: {
     first: string;
     middle: string;
@@ -70,11 +73,34 @@ export default function StudentProfile() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">My Profile</h1>
-        <p className="text-gray-600 mt-1">
-          Manage your personal and academic information
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">My Profile</h1>
+          <p className="text-gray-600 mt-1">Manage your personal and academic information</p>
+        </div>
+        {user.status === 'PLACED' ? (
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
+            <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-green-800">
+                Placed{user.companyName ? ` at ${user.companyName}` : ''}
+              </p>
+              {user.package ? (
+                <p className="text-xs text-green-600">{user.package} LPA</p>
+              ) : null}
+            </div>
+          </div>
+        ) : user.status === 'INELIGIBLE' ? (
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+            <p className="text-sm font-semibold text-red-700">Ineligible</p>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5">
+            <Clock className="w-4 h-4 text-blue-500 flex-shrink-0" />
+            <p className="text-sm font-semibold text-blue-700">Placement in Progress</p>
+          </div>
+        )}
       </div>
 
       <Tabs defaultValue="personal" className="w-full">
@@ -182,16 +208,41 @@ export default function StudentProfile() {
             <CardContent>
               <form className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
-                  <Input placeholder="10th %" />
-                  <Input placeholder="12th %" />
-                  <Input placeholder="CGPA" />
-                  <Input placeholder="Backlogs" />
-                  <Input placeholder="Year of Passing" />
-                  <Input placeholder="Semester" />
+                  <div>
+                    <Label>CGPA</Label>
+                    <Input
+                      className="mt-1"
+                      value={user.cgpa ?? ''}
+                      readOnly
+                      placeholder="—"
+                    />
+                  </div>
+                  <div>
+                    <Label>Branch</Label>
+                    <Input className="mt-1" value={user.branch} readOnly />
+                  </div>
+                  <div>
+                    <Label>Placement Status</Label>
+                    <Input
+                      className="mt-1"
+                      value={
+                        user.status === 'PLACED'
+                          ? `Placed${user.companyName ? ` at ${user.companyName}` : ''}`
+                          : user.status === 'INELIGIBLE'
+                          ? 'Ineligible'
+                          : 'Unplaced'
+                      }
+                      readOnly
+                    />
+                  </div>
+                  {user.status === 'PLACED' && user.package ? (
+                    <div>
+                      <Label>Package (LPA)</Label>
+                      <Input className="mt-1" value={user.package} readOnly />
+                    </div>
+                  ) : null}
                 </div>
-                <Button className="bg-indigo-600 hover:bg-indigo-700">
-                  Save Changes
-                </Button>
+                <p className="text-xs text-gray-500">Academic details are managed by the TnP office. Contact them to make changes.</p>
               </form>
             </CardContent>
           </Card>

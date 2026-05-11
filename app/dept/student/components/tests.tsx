@@ -67,8 +67,16 @@ export default function StudentTests() {
   const activePolls = polls.filter((p) => p.status === "active");
   const closedPolls = polls.filter((p) => p.status === "closed");
 
-  function handleVote(pollId: string) {
+  async function handleVote(pollId: string, optionIndex: number) {
     setVotedPolls((prev) => new Set([...prev, pollId]));
+    try {
+      await fetch(`/api/dept/polls/${pollId}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ optionIndex }),
+      });
+    } catch {}
   }
 
   return (
@@ -243,7 +251,7 @@ export default function StudentTests() {
                               <button
                                 key={idx}
                                 disabled={hasVoted}
-                                onClick={() => handleVote(poll._id)}
+                                onClick={() => handleVote(poll._id, idx)}
                                 className="w-full text-left p-3 border border-gray-100 rounded-xl hover:border-blue-300 hover:bg-blue-50/30 transition-all disabled:cursor-default"
                               >
                                 <div className="flex items-center justify-between mb-1.5">

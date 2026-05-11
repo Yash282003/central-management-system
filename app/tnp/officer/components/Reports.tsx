@@ -1,15 +1,6 @@
 "use client";
-import { 
-  Users, 
-  Building2, 
-  LayoutDashboard, 
-  Bell, 
-  FileText, 
-  Settings,
-  Download,
-  Award
-} from 'lucide-react';
-import DashboardLayout from '../../dashboardLayout';
+import { useState } from 'react';
+import { FileText, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -83,7 +74,25 @@ const reports = [
   },
 ];
 
+const reportTypeMap: Record<string, string> = {
+  "Placement Statistics": "placed",
+  "Student Data": "all",
+  "Company Data": "companies",
+  "Drive Analytics": "companies",
+};
+
 export default function OfficerReports() {
+  const [reportType, setReportType] = useState("Placement Statistics");
+  const [branch, setBranch] = useState("All Branches");
+
+  function handleGenerate() {
+    const type = reportTypeMap[reportType] ?? "placed";
+    const branchParam = branch !== "All Branches" ? `&branch=${branch}` : "";
+    const url = `/api/tnp/reports/csv?type=${type}${branchParam}`;
+    const filename = `${reportType.replace(/\s+/g, "_")}_${branch !== "All Branches" ? branch + "_" : ""}report.csv`;
+    downloadCSV(url, filename);
+  }
+
   return (
     
       <div className="space-y-6">
@@ -170,7 +179,11 @@ export default function OfficerReports() {
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-900 block mb-2">Report Type</label>
-                  <select className="w-full p-2 border border-gray-200 rounded-lg">
+                  <select
+                    className="w-full p-2 border border-gray-200 rounded-lg"
+                    value={reportType}
+                    onChange={(e) => setReportType(e.target.value)}
+                  >
                     <option>Placement Statistics</option>
                     <option>Student Data</option>
                     <option>Company Data</option>
@@ -179,7 +192,11 @@ export default function OfficerReports() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-900 block mb-2">Branch Filter</label>
-                  <select className="w-full p-2 border border-gray-200 rounded-lg">
+                  <select
+                    className="w-full p-2 border border-gray-200 rounded-lg"
+                    value={branch}
+                    onChange={(e) => setBranch(e.target.value)}
+                  >
                     <option>All Branches</option>
                     <option>CSE</option>
                     <option>ECE</option>
@@ -198,7 +215,7 @@ export default function OfficerReports() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <Button className="bg-indigo-600 hover:bg-indigo-700">
+                <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={handleGenerate}>
                   <Download className="w-4 h-4 mr-2" />
                   Generate Report
                 </Button>

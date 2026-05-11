@@ -1,18 +1,12 @@
 "use client"
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { 
-  LayoutDashboard, 
-  User, 
-  Building2, 
-  FileText, 
-  Bell, 
-  LogOut,
+import {
   CheckCircle2,
   Clock,
-  XCircle,
   ThumbsUp,
   Heart,
   MessageSquare,
@@ -20,7 +14,8 @@ import {
   Code,
   BookOpen,
   FileCheck,
-  TrendingUp
+  TrendingUp,
+  AlertCircle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import TnpNoticesPanel from './TnpNoticesPanel';
@@ -65,42 +60,75 @@ const notifications = [
   },
 ];
 
+type StudentProfile = {
+  status?: string;
+  companyName?: string;
+  package?: number;
+  name?: { first: string; last: string };
+};
+
 export default function StudentDashboard() {
-  const router=useRouter()
+  const router = useRouter();
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
+
+  useEffect(() => {
+    fetch('/api/student/me', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setProfile(d.data); })
+      .catch(() => {});
+  }, []);
+
+  const status = profile?.status ?? 'UNPLACED';
+  const isPlaced = status === 'PLACED';
+  const isIneligible = status === 'INELIGIBLE';
+
   return (
-    
+
       <div className="space-y-6">
         <TnpNoticesPanel />
 
-        {/* Activity Banner - Placed */}
-        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
-              <div>
-                <h3 className="text-lg font-semibold text-green-900">
-                  Congratulations! You are placed at TCS
-                </h3>
-                <p className="text-sm text-green-700">Package: 7 LPA | Role: Software Developer</p>
+        {/* Placement Status Banner — driven by real profile data */}
+        {isPlaced ? (
+          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-green-900">
+                    Congratulations! You are placed{profile?.companyName ? ` at ${profile.companyName}` : ''}
+                  </h3>
+                  {profile?.package ? (
+                    <p className="text-sm text-green-700">Package: {profile.package} LPA</p>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Activity Banner - Participating */}
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <Clock className="w-6 h-6 text-blue-600" />
-              <div>
-                <h3 className="text-lg font-semibold text-blue-900">
-                  You are participating in Google Placement Drive
-                </h3>
-                <p className="text-sm text-blue-700">Scheduled: March 20, 2026 | Interview Round</p>
+            </CardContent>
+          </Card>
+        ) : isIneligible ? (
+          <Card className="bg-gradient-to-r from-red-50 to-orange-50 border-red-200">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-6 h-6 text-red-500" />
+                <div>
+                  <h3 className="text-lg font-semibold text-red-900">You are currently marked as ineligible</h3>
+                  <p className="text-sm text-red-700">Contact the TnP office for more information.</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <Clock className="w-6 h-6 text-blue-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-900">Your placement is in progress</h3>
+                  <p className="text-sm text-blue-700">Browse companies and apply to open drives.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Profile Completion */}

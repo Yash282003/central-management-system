@@ -34,34 +34,60 @@ interface Student {
 export default function StudentProfile() {
   const [user, setUser] = useState<Student | null>(null);
 
-  const [skills, setSkills] = useState<string[]>([
-    'React',
-    'Node.js',
-    'Python',
-    'Java',
-    'SQL'
-  ]);
+  const DEFAULT_SKILLS = ['React', 'Node.js', 'Python', 'Java', 'SQL'];
+  const [skills, setSkills] = useState<string[]>([]);
+  const [skillsLoaded, setSkillsLoaded] = useState(false);
+  const [skillSaving, setSkillSaving] = useState(false);
   const [newSkill, setNewSkill] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
       const res = await getDetails();
-      if (res?.success) {
-        setUser(res.data);
-      }
+      if (res?.success) setUser(res.data);
     };
     loadData();
+
+    fetch('/api/student/skills', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) {
+          setSkills(d.data.length > 0 ? d.data : DEFAULT_SKILLS);
+        } else {
+          setSkills(DEFAULT_SKILLS);
+        }
+        setSkillsLoaded(true);
+      })
+      .catch(() => { setSkills(DEFAULT_SKILLS); setSkillsLoaded(true); });
   }, []);
 
+  const saveSkills = async (updated: string[]) => {
+    setSkillSaving(true);
+    try {
+      await fetch('/api/student/skills', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ skills: updated }),
+      });
+    } finally {
+      setSkillSaving(false);
+    }
+  };
+
   const addSkill = () => {
-    if (newSkill.trim()) {
-      setSkills([...skills, newSkill.trim()]);
+    const trimmed = newSkill.trim();
+    if (trimmed && !skills.includes(trimmed)) {
+      const updated = [...skills, trimmed];
+      setSkills(updated);
       setNewSkill('');
+      saveSkills(updated);
     }
   };
 
   const removeSkill = (index: number) => {
-    setSkills(skills.filter((_, i) => i !== index));
+    const updated = skills.filter((_, i) => i !== index);
+    setSkills(updated);
+    saveSkills(updated);
   };
 
   // ✅ Loading state
@@ -252,27 +278,40 @@ export default function StudentProfile() {
         <TabsContent value="professional">
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Skills</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Skills</CardTitle>
+                {skillSaving && <span className="text-xs text-gray-400">Saving…</span>}
+                {!skillSaving && skillsLoaded && <span className="text-xs text-gray-400">Auto-saved</span>}
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 min-h-[2rem]">
                 {skills.map((skill, index) => (
-                  <Badge key={index}>
+                  <Badge key={index} className="bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 pr-1">
                     {skill}
-                    <button onClick={() => removeSkill(index)}>
-                      <X className="w-3 h-3 ml-2" />
+                    <button
+                      onClick={() => removeSkill(index)}
+                      className="ml-1.5 hover:text-red-600 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
                     </button>
                   </Badge>
                 ))}
+                {skills.length === 0 && skillsLoaded && (
+                  <p className="text-xs text-gray-400">No skills added yet.</p>
+                )}
               </div>
 
               <div className="flex gap-2 mt-4">
                 <Input
                   value={newSkill}
                   onChange={(e) => setNewSkill(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addSkill()}
+                  placeholder="e.g. TypeScript, Docker, AWS…"
                 />
-                <Button onClick={addSkill}>Add</Button>
+                <Button onClick={addSkill} className="bg-indigo-600 hover:bg-indigo-700 text-white">Add</Button>
               </div>
+              <p className="text-xs text-gray-400 mt-2">Press Enter or click Add. Changes are saved automatically.</p>
             </CardContent>
           </Card>
         </TabsContent>

@@ -92,6 +92,11 @@ const studentSchema = new Schema(
       type: String,
       required: [true, "Address is required"],
     },
+
+    skills: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true },
 );

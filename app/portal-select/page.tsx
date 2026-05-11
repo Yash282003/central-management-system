@@ -54,15 +54,6 @@ const portalAccents: Record<Portal["id"], { accent: string; bg: string; tag: str
   },
 };
 
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 5) return "Working late";
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  if (h < 21) return "Good evening";
-  return "Good night";
-}
-
 export default function PortalSelectPage() {
   const router = useRouter();
   const [data, setData] = useState<PortalsResponse | null>(null);
@@ -72,8 +63,17 @@ export default function PortalSelectPage() {
     fetch("/api/me/portals", { credentials: "include" })
       .then((r) => r.json())
       .then((d: PortalsResponse) => {
-        if (!d.success) router.replace("/login");
-        else setData(d);
+        if (!d.success) {
+          router.replace("/login");
+          return;
+        }
+        // Portal selector is for students only; teachers/admins go straight
+        // to their single workspace.
+        if (d.user?.role !== "student" && d.portals?.[0]?.href) {
+          router.replace(d.portals[0].href);
+          return;
+        }
+        setData(d);
       })
       .catch(() => router.replace("/login"));
   }, [router]);
@@ -144,17 +144,16 @@ export default function PortalSelectPage() {
             className="text-[44px] md:text-[68px] leading-[0.95] tracking-tight text-stone-900 font-medium opacity-0 animate-fadeup"
             data-delay="80"
           >
-            {data ? greeting() : "Welcome"},{" "}
+            Welcome,{" "}
             <span style={{ fontStyle: "italic", fontWeight: 400, color: "#8a6a2f" }}>
-              {user?.name?.split(" ")[0] ?? "—"}
+              {user?.name ?? "—"}
             </span>
           </h1>
           <p
             className="mt-5 text-stone-600 text-base md:text-lg max-w-xl opacity-0 animate-fadeup"
             data-delay="160"
           >
-            Choose where you want to go. Each portal is a different part of campus life,
-            quietly waiting for you.
+            Select a portal to continue.
           </p>
         </div>
 

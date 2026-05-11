@@ -18,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import TnpNoticesPanel from './TnpNoticesPanel';
 
 const notifications = [
   {
@@ -102,6 +103,9 @@ export default function StudentNotifications() {
           <h1 className="text-2xl font-semibold text-gray-900">Notifications & Announcements</h1>
           <p className="text-gray-600 mt-1">Stay updated with placement drives and announcements</p>
         </div>
+
+        {/* Real notices from TnP officer (badge suppressed on this page) */}
+        <TnpNoticesPanel hideBadge />
 
         {/* Notifications List */}
         <div className="space-y-4">

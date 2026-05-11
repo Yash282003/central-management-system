@@ -14,6 +14,12 @@ const companySchema = new Schema(
       trim: true,
     },
 
+    description: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
     category: {
       type: String,
       required: [true, "Category is required"],

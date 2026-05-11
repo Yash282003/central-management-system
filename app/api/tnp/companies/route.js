@@ -45,6 +45,7 @@ export async function POST(request) {
     const {
       company,
       role,
+      description,
       category,
       package: pkg,
       eligibility,
@@ -72,6 +73,7 @@ export async function POST(request) {
     const newCompany = await Company.create({
       company,
       role,
+      description: description ?? "",
       category,
       package: pkg,
       eligibility,

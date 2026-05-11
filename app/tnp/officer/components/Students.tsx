@@ -32,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { fetchTnpStudents } from "@/services/student/fetchTnpStudents";
+import AddStudentDialog from "./AddStudentDialog";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 type StudentName = { first: string; middle?: string; last: string };
@@ -93,6 +94,7 @@ export default function OfficerStudents() {
   const [branch, setBranch]         = useState("ALL");
   const [status, setStatus]         = useState("ALL");
   const [page, setPage]             = useState(1);
+  const [addOpen, setAddOpen]       = useState(false);
 
   /* Debounce search input */
   useEffect(() => {
@@ -142,7 +144,10 @@ export default function OfficerStudents() {
             Manage student profiles and placement status
           </p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm">
+        <Button
+          className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
+          onClick={() => setAddOpen(true)}
+        >
           + Add Student
         </Button>
       </div>
@@ -411,6 +416,12 @@ export default function OfficerStudents() {
           )}
         </CardContent>
       </Card>
+
+      <AddStudentDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onCreated={() => load()}
+      />
     </div>
   );
 }

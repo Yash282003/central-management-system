@@ -17,6 +17,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import SendNoticeDialog from './SendNoticeDialog';
+import AddCompanyDialog from './AddCompanyDialog';
+import { useRouter } from 'next/navigation';
 
 type Company = {
   _id: string;
@@ -44,6 +47,10 @@ const categoryStyles: Record<string, string> = {
 
 export default function CompaniesView({ companies }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [noticeCompany, setNoticeCompany] = useState<Company | null>(null);
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const router = useRouter();
 
   const filteredCompanies = companies.filter(
     (c) =>
@@ -58,7 +65,10 @@ export default function CompaniesView({ companies }: Props) {
           <h1 className="text-2xl font-semibold text-gray-900">Company Management</h1>
           <p className="text-gray-600 mt-1">Manage companies and placement drives</p>
         </div>
-        <Button className="bg-indigo-600 text-white hover:bg-indigo-700">
+        <Button
+          className="bg-indigo-600 text-white hover:bg-indigo-700"
+          onClick={() => setAddOpen(true)}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add Company
         </Button>
@@ -158,7 +168,14 @@ export default function CompaniesView({ companies }: Props) {
                   <Button variant="outline" size="sm">
                     Edit
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setNoticeCompany(company);
+                      setNoticeOpen(true);
+                    }}
+                  >
                     Send Notice
                   </Button>
                 </div>
@@ -192,6 +209,19 @@ export default function CompaniesView({ companies }: Props) {
           </div>
         </CardContent>
       </Card>
+
+      <SendNoticeDialog
+        open={noticeOpen}
+        onOpenChange={setNoticeOpen}
+        company={noticeCompany}
+      />
+
+      <AddCompanyDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        mode="company"
+        onCreated={() => router.refresh()}
+      />
     </div>
   );
 }

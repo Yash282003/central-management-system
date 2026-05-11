@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import AddCompanyDialog from './AddCompanyDialog';
 
 /* ── Types ── */
 type Drive = {
@@ -226,6 +227,7 @@ function DriveSection({
 /* ── Main Client View ── */
 export default function PlacementDrivesView({ upcoming, current, completed }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   const totalDrives = upcoming.length + current.length + completed.length;
 
@@ -239,7 +241,10 @@ export default function PlacementDrivesView({ upcoming, current, completed }: Pr
             {totalDrives} total drives — {upcoming.length} upcoming, {current.length} active, {completed.length} completed
           </p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+        <Button
+          className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          onClick={() => setScheduleOpen(true)}
+        >
           + Schedule Drive
         </Button>
       </div>
@@ -326,6 +331,12 @@ export default function PlacementDrivesView({ upcoming, current, completed }: Pr
         status="completed"
         emptyMsg="No completed drives yet."
         searchQuery={searchQuery}
+      />
+
+      <AddCompanyDialog
+        open={scheduleOpen}
+        onOpenChange={setScheduleOpen}
+        mode="drive"
       />
     </div>
   );

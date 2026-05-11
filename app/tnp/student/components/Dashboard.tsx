@@ -23,6 +23,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import TnpNoticesPanel from './TnpNoticesPanel';
 
 
 const availableCompanies = [
@@ -69,6 +70,8 @@ export default function StudentDashboard() {
   return (
     
       <div className="space-y-6">
+        <TnpNoticesPanel />
+
         {/* Activity Banner - Placed */}
         <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
           <CardContent className="p-6">

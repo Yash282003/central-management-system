@@ -1,10 +1,5 @@
-import React from 'react'
-import { RoleSelector } from './selector'
+import { redirect } from "next/navigation";
 
-const page = () => {
-  return (
-    <RoleSelector/>
-  )
+export default function Page() {
+  redirect("/portal-select");
 }
-
-export default page

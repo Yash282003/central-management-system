@@ -15,46 +15,71 @@ import { Button } from '@/components/ui/button';
 
 
 
+function downloadCSV(url: string, filename: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 const reports = [
   {
     title: 'Overall Placement Report',
     description: 'Complete placement statistics for all branches',
-    formats: ['PDF', 'CSV']
+    formats: ['CSV'],
+    csvUrl: '/api/tnp/reports/csv?type=placed',
+    csvFile: 'placed_students.csv',
   },
   {
-    title: 'Branch-wise Placement Report',
-    description: 'Detailed placement data segregated by branch',
-    formats: ['PDF', 'CSV', 'Excel']
+    title: 'All Students Report',
+    description: 'Full student list with branch, CGPA, and status',
+    formats: ['CSV'],
+    csvUrl: '/api/tnp/reports/csv?type=all',
+    csvFile: 'all_students.csv',
   },
   {
     title: 'Company-wise Hiring Report',
-    description: 'Students hired by each company',
-    formats: ['PDF', 'CSV']
+    description: 'All registered placement drives with package and eligibility',
+    formats: ['CSV'],
+    csvUrl: '/api/tnp/reports/csv?type=companies',
+    csvFile: 'companies_report.csv',
   },
   {
     title: 'Student Placement List',
     description: 'List of all placed students with details',
-    formats: ['PDF', 'CSV', 'Excel']
+    formats: ['PDF', 'CSV'],
+    csvUrl: '/api/tnp/reports/csv?type=placed',
+    csvFile: 'placed_students.csv',
   },
   {
     title: 'Unplaced Students Report',
     description: 'List of unplaced students for follow-up',
-    formats: ['PDF', 'CSV']
+    formats: ['CSV'],
+    csvUrl: '/api/tnp/reports/csv?type=all',
+    csvFile: 'all_students.csv',
   },
   {
     title: 'Package Distribution Report',
     description: 'Analysis of salary packages offered',
-    formats: ['PDF', 'CSV']
+    formats: ['CSV'],
+    csvUrl: '/api/tnp/reports/csv?type=placed',
+    csvFile: 'placed_students.csv',
   },
   {
     title: 'Placement Drive Summary',
     description: 'Summary of all placement drives conducted',
-    formats: ['PDF']
+    formats: ['PDF', 'CSV'],
+    csvUrl: '/api/tnp/reports/csv?type=companies',
+    csvFile: 'companies_report.csv',
   },
   {
     title: 'Student Application Report',
     description: 'All applications submitted by students',
-    formats: ['CSV', 'Excel']
+    formats: ['CSV'],
+    csvUrl: '/api/tnp/reports/csv?type=all',
+    csvFile: 'all_students.csv',
   },
 ];
 
@@ -119,6 +144,8 @@ export default function OfficerReports() {
                       size="sm"
                       variant="outline"
                       className="border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                      onClick={format === "CSV" && report.csvUrl ? () => downloadCSV(report.csvUrl!, report.csvFile!) : undefined}
+                      disabled={format !== "CSV"}
                     >
                       <Download className="w-3 h-3 mr-1" />
                       {format}

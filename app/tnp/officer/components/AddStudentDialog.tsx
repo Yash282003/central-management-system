@@ -138,13 +138,13 @@ export default function AddStudentDialog({ open, onOpenChange, onCreated }: Prop
         setError(json.message || "Failed to create student.");
       } else {
         setSuccess(
-          `Student created. Temporary password: ${form.password} (share securely)`
+          `Student created. Temporary password: ${form.password} — copy this now, it won't be shown again.`
         );
         onCreated?.();
         setTimeout(() => {
           onOpenChange(false);
           reset();
-        }, 1500);
+        }, 6000);
       }
     } catch (e: any) {
       setError(e?.message || "Network error.");

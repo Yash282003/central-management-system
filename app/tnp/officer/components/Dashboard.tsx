@@ -27,7 +27,7 @@ export default function OfficerDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/tnp/students")
+    fetch("/api/tnp/students?limit=1000")
       .then((r) => r.json())
       .then((d) => { if (d.success) setStudents(d.data ?? []); })
       .finally(() => setLoading(false));

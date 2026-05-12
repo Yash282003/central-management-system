@@ -82,9 +82,9 @@ function LoginPageInner() {
       if (role === "student") {
         res = await Loginstudent({ regdNo: cleanId, password });
       } else if (role === "teacher") {
-        res = await Loginteacher({ email: cleanId.toLowerCase(), password });
+        res = await Loginteacher({ email: cleanId, password });
       } else {
-        res = await Loginadmin({ email: cleanId.toLowerCase(), password });
+        res = await Loginadmin({ email: cleanId, password });
       }
 
       if (res?.success) {

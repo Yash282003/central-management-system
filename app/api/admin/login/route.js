@@ -18,8 +18,7 @@ export async function POST(request) {
       );
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const admin = await Admin.findOne({ email: normalizedEmail });
+    const admin = await Admin.findOne({ email: email.trim() });
 
     if (!admin) {
       return NextResponse.json(

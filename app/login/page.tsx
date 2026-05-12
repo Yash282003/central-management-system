@@ -78,12 +78,13 @@ function LoginPageInner() {
     try {
       let res;
 
+      const cleanId = id.trim();
       if (role === "student") {
-        res = await Loginstudent({ regdNo: id, password });
+        res = await Loginstudent({ regdNo: cleanId, password });
       } else if (role === "teacher") {
-        res = await Loginteacher({ email: id, password });
+        res = await Loginteacher({ email: cleanId.toLowerCase(), password });
       } else {
-        res = await Loginadmin({ email: id, password });
+        res = await Loginadmin({ email: cleanId.toLowerCase(), password });
       }
 
       if (res?.success) {

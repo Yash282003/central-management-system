@@ -19,8 +19,10 @@ export async function POST(request) {
       );
     }
 
-    // ✅ Find teacher
-    const teacher = await Teacher.findOne({ email });
+    // Find teacher — normalize the email (trim + lowercase) so accidental
+    // trailing spaces or different casing from autofill still match.
+    const normalizedEmail = email.trim().toLowerCase();
+    const teacher = await Teacher.findOne({ email: normalizedEmail });
 
     if (!teacher) {
       return NextResponse.json(

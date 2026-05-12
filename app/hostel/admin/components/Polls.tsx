@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,60 +15,92 @@ import {
 import { BarChart3, Plus, ThumbsUp, ThumbsDown, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
+interface PollOption {
+  text: string;
+  votes: string[];
+}
+
 interface Poll {
-  id: number;
+  _id: string;
   question: string;
-  yesVotes: number;
-  noVotes: number;
-  totalVotes: number;
-  status: "Active" | "Closed";
+  options: PollOption[];
+  active: boolean;
   createdAt: string;
+  closedAt?: string;
 }
 
 export default function AdminPolls() {
   const [question, setQuestion] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [polls, setPolls] = useState<Poll[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [polls, setPolls] = useState<Poll[]>([
-    { id: 1, question: "Special feast this weekend?", yesVotes: 187, noVotes: 45, totalVotes: 232, status: "Active", createdAt: "March 17, 2026" },
-    { id: 2, question: "Prefer non-veg menu twice a week?", yesVotes: 156, noVotes: 89, totalVotes: 245, status: "Active", createdAt: "March 15, 2026" },
-    { id: 3, question: "Extend library hours till 2 AM?", yesVotes: 198, noVotes: 34, totalVotes: 232, status: "Closed", createdAt: "March 10, 2026" },
-  ]);
+  async function loadPolls() {
+    try {
+      const res = await fetch("/api/hostel/admin/polls");
+      const json = await res.json();
+      if (json.success) setPolls(json.data ?? []);
+    } catch {}
+  }
+  useEffect(() => { loadPolls(); }, []);
 
-  const handleCreatePoll = () => {
+  const handleCreatePoll = async () => {
     if (!question.trim()) {
       toast.error("Please enter a poll question");
       return;
     }
-    const newPoll: Poll = {
-      id: Date.now(),
-      question,
-      yesVotes: 0,
-      noVotes: 0,
-      totalVotes: 0,
-      status: "Active",
-      createdAt: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
-    };
-    setPolls((prev) => [newPoll, ...prev]);
-    setQuestion("");
-    setIsDialogOpen(false);
-    toast.success("Poll created successfully");
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/hostel/admin/polls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: question.trim(), options: ["Yes", "No"] }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.message || "Failed to create poll");
+      } else {
+        toast.success("Poll created successfully");
+        setQuestion("");
+        setIsDialogOpen(false);
+        loadPolls();
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleClosePoll = (id: number) => {
-    setPolls((prev) => prev.map((p) => (p.id === id ? { ...p, status: "Closed" } : p)));
-    toast.success("Poll closed");
+  const handleClosePoll = async (id: string) => {
+    try {
+      const res = await fetch(`/api/hostel/admin/polls?id=${id}&action=toggle`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Poll closed");
+        loadPolls();
+      } else {
+        toast.error(json.message || "Failed");
+      }
+    } catch { toast.error("Network error"); }
   };
 
   const filtered = polls.filter((p) => {
-    if (statusFilter === "active") return p.status === "Active";
-    if (statusFilter === "closed") return p.status === "Closed";
+    if (statusFilter === "active") return p.active;
+    if (statusFilter === "closed") return !p.active;
     return true;
   });
 
-  const activeCount = polls.filter((p) => p.status === "Active").length;
-  const totalVotes = polls.reduce((s, p) => s + p.totalVotes, 0);
+  const activeCount = polls.filter((p) => p.active).length;
+  const totalVotes = polls.reduce(
+    (s, p) => s + (p.options ?? []).reduce((ss, o) => ss + (o.votes?.length ?? 0), 0),
+    0
+  );
 
   return (
     <div className="p-8">
@@ -142,13 +174,17 @@ export default function AdminPolls() {
       ) : (
         <div className="space-y-4">
           {filtered.map((poll) => {
-            const yesPercentage = poll.totalVotes > 0 ? (poll.yesVotes / poll.totalVotes) * 100 : 0;
-            const noPercentage = poll.totalVotes > 0 ? (poll.noVotes / poll.totalVotes) * 100 : 0;
-            const isActive = poll.status === "Active";
+            const yesOpt = poll.options?.find((o) => o.text.toLowerCase() === "yes");
+            const noOpt = poll.options?.find((o) => o.text.toLowerCase() === "no");
+            const yesVotes = yesOpt?.votes?.length ?? 0;
+            const noVotes = noOpt?.votes?.length ?? 0;
+            const totalVotes = yesVotes + noVotes;
+            const yesPercentage = totalVotes > 0 ? (yesVotes / totalVotes) * 100 : 0;
+            const noPercentage = totalVotes > 0 ? (noVotes / totalVotes) * 100 : 0;
 
             return (
               <Card
-                key={poll.id}
+                key={poll._id}
                 className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow"
               >
                 <CardContent className="p-6">
@@ -159,24 +195,23 @@ export default function AdminPolls() {
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900">{poll.question}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">Created: {poll.createdAt}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Created: {new Date(poll.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Badge
-                        className={`text-xs border-0 ${
-                          isActive
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {poll.status}
-                      </Badge>
-                    </div>
+                    <Badge
+                      className={`text-xs border-0 flex-shrink-0 ${
+                        poll.active
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {poll.active ? "Active" : "Closed"}
+                    </Badge>
                   </div>
 
                   <div className="space-y-3 mb-4">
-                    {/* Yes */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-1.5 text-sm font-medium text-emerald-700">
@@ -184,7 +219,7 @@ export default function AdminPolls() {
                           Yes
                         </div>
                         <span className="text-sm text-gray-500">
-                          {poll.yesVotes} votes ({yesPercentage.toFixed(1)}%)
+                          {yesVotes} votes ({yesPercentage.toFixed(1)}%)
                         </span>
                       </div>
                       <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -195,7 +230,6 @@ export default function AdminPolls() {
                       </div>
                     </div>
 
-                    {/* No */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-1.5 text-sm font-medium text-red-600">
@@ -203,7 +237,7 @@ export default function AdminPolls() {
                           No
                         </div>
                         <span className="text-sm text-gray-500">
-                          {poll.noVotes} votes ({noPercentage.toFixed(1)}%)
+                          {noVotes} votes ({noPercentage.toFixed(1)}%)
                         </span>
                       </div>
                       <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -217,13 +251,13 @@ export default function AdminPolls() {
 
                   <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                     <p className="text-sm text-gray-500">
-                      <span className="font-semibold text-gray-900">{poll.totalVotes}</span> total votes
+                      <span className="font-semibold text-gray-900">{totalVotes}</span> total votes
                     </p>
-                    {isActive && (
+                    {poll.active && (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleClosePoll(poll.id)}
+                        onClick={() => handleClosePoll(poll._id)}
                         className="rounded-lg gap-1.5 text-xs"
                       >
                         <CheckCircle className="size-3.5" />
@@ -238,7 +272,6 @@ export default function AdminPolls() {
         </div>
       )}
 
-      {/* Create Poll Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={(o) => { setIsDialogOpen(o); if (!o) setQuestion(""); }}>
         <DialogContent className="max-w-md rounded-2xl">
           <DialogHeader>
@@ -265,9 +298,10 @@ export default function AdminPolls() {
             </Button>
             <Button
               onClick={handleCreatePoll}
+              disabled={submitting}
               className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl"
             >
-              Create Poll
+              {submitting ? "Creating…" : "Create Poll"}
             </Button>
           </DialogFooter>
         </DialogContent>

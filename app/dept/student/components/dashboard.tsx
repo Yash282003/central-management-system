@@ -104,15 +104,15 @@ export default function StudentDashboard() {
       .catch(() => {});
   }, []);
 
-  // Derived metrics from real data
+  // Derived metrics from real data — single source per metric:
+  //   - Attendance comes from /api/dept/attendance
+  //   - Total courses comes from /api/dept/grades (same as /dept/student/grades page)
+  //   - Upcoming tests comes from /api/dept/tests
   const avgAttendance = attendance.length > 0
     ? Math.round(attendance.reduce((s, a) => s + (a.percentage ?? 0), 0) / attendance.length)
     : null;
 
-  const courseSet = new Set<string>();
-  attendance.forEach((a) => a.courseName && courseSet.add(a.courseName.toLowerCase()));
-  grades.forEach((g) => g.courseName && courseSet.add(g.courseName.toLowerCase()));
-  const totalCourses = courseSet.size;
+  const totalCourses = grades.length;
 
   const now = new Date();
   const horizon = new Date();

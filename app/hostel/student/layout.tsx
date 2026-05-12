@@ -14,6 +14,8 @@ import {
   LogOut,
   Menu,
   X,
+  IndianRupee,
+  Vote,
 } from "lucide-react";
 
 import { useState, ReactNode } from "react";
@@ -26,6 +28,8 @@ const menuItems = [
   { icon: MessageSquare, label: "Complaints", path: "/hostel/student/complaints" },
   { icon: FileText, label: "Applications", path: "/hostel/student/applications" },
   { icon: Utensils, label: "Mess", path: "/hostel/student/mess" },
+  { icon: Vote, label: "Polls", path: "/hostel/student/polls" },
+  { icon: IndianRupee, label: "Fines", path: "/hostel/student/fines" },
   { icon: Phone, label: "Contacts", path: "/hostel/student/contacts" },
   { icon: User, label: "Profile", path: "/hostel/student/profile" },
 ];

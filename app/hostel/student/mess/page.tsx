@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Utensils, Coffee, Sun, Sunset, Moon } from "lucide-react";
+import { Utensils, Coffee, Sun, Sunset, Moon, QrCode, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -65,6 +65,28 @@ export default function MessMenuPage() {
         <h1 className="text-2xl font-semibold text-gray-900 mb-1">Mess Menu</h1>
         <p className="text-gray-500 text-sm">Weekly meal schedule for the hostel mess</p>
       </div>
+
+      {/* QR Attendance — future scope */}
+      <Card className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/40 mb-8">
+        <CardContent className="p-5 flex items-start gap-4">
+          <div className="size-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
+            <QrCode className="size-6 text-slate-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-semibold text-slate-700">QR Code Attendance</h3>
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                <Sparkles className="size-3" /> Coming soon
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Scan a daily QR at the mess entry to mark meal attendance and unlock
+              personal meal-history analytics. This feature is on the roadmap and
+              isn&apos;t live yet.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Meal legend */}
       <div className="flex flex-wrap gap-3 mb-6">

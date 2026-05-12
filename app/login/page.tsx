@@ -92,8 +92,18 @@ function LoginPageInner() {
       } else {
         setError(res?.message || "Login failed. Please try again.");
       }
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err: any) {
+      console.error("[login] error:", err);
+      const apiMsg = err?.response?.data?.message;
+      if (apiMsg) {
+        setError(apiMsg);
+      } else if (err?.code === "ERR_NETWORK" || err?.message?.includes("Network")) {
+        setError("Can't reach the server. Check your connection and try again.");
+      } else if (err?.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
+        setError("Server took too long to respond. Try again in a moment.");
+      } else {
+        setError(err?.message || "Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

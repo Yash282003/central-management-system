@@ -64,12 +64,34 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [openNotice, setOpenNotice] = useState<number | null>(null);
   const [recentNotices, setRecentNotices] = useState<any[]>([]);
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [grades, setGrades] = useState<any[]>([]);
+  const [tests, setTests] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const res = await getDetails();
-        if (res?.success) setUser(res.data);
+        if (res?.success) {
+          setUser(res.data);
+          const regd = res.data.regdNo;
+          const branch = res.data.branch;
+          // Fire course-data fetches now that we know the student
+          fetch(`/api/dept/attendance?regdNo=${encodeURIComponent(regd)}`, { credentials: "include" })
+            .then((r) => r.json())
+            .then((d) => { if (d.success) setAttendance(d.data ?? []); })
+            .catch(() => {});
+          fetch(`/api/dept/grades?regdNo=${encodeURIComponent(regd)}`, { credentials: "include" })
+            .then((r) => r.json())
+            .then((d) => { if (d.success) setGrades(d.data ?? []); })
+            .catch(() => {});
+          if (branch) {
+            fetch(`/api/dept/tests?branch=${encodeURIComponent(branch)}`, { credentials: "include" })
+              .then((r) => r.json())
+              .then((d) => { if (d.success) setTests(d.data ?? []); })
+              .catch(() => {});
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -82,7 +104,29 @@ export default function StudentDashboard() {
       .catch(() => {});
   }, []);
 
+  // Derived metrics from real data
+  const avgAttendance = attendance.length > 0
+    ? Math.round(attendance.reduce((s, a) => s + (a.percentage ?? 0), 0) / attendance.length)
+    : null;
+
+  const courseSet = new Set<string>();
+  attendance.forEach((a) => a.courseName && courseSet.add(a.courseName.toLowerCase()));
+  grades.forEach((g) => g.courseName && courseSet.add(g.courseName.toLowerCase()));
+  const totalCourses = courseSet.size;
+
+  const now = new Date();
+  const horizon = new Date();
+  horizon.setDate(horizon.getDate() + 14);
+  const upcomingTests = tests.filter((t) => {
+    if (!t.date) return false;
+    const d = new Date(t.date);
+    return d >= now && d <= horizon;
+  }).length;
+
   const cgpaCount = useCounter(loading ? 0 : (user?.cgpa ?? 0));
+  const attendanceCount = useCounter(loading ? 0 : (avgAttendance ?? 0));
+  const coursesCount = useCounter(loading ? 0 : totalCourses);
+  const testsCount = useCounter(loading ? 0 : upcomingTests);
 
   return (
     <div className="p-8">
@@ -138,8 +182,17 @@ export default function StudentDashboard() {
             >
               <CardContent className="p-5">
                 <p className="text-xs font-medium text-emerald-600 mb-1">AVG ATTENDANCE</p>
-                <p className="text-3xl font-bold text-emerald-700">—</p>
-                <p className="text-xs text-emerald-500 mt-1">across all courses</p>
+                {avgAttendance != null ? (
+                  <>
+                    <p className="text-3xl font-bold text-emerald-700">{Math.floor(attendanceCount)}%</p>
+                    <p className="text-xs text-emerald-500 mt-1">across all courses</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold text-emerald-700/80 leading-tight">Not recorded yet</p>
+                    <p className="text-xs text-emerald-500 mt-1.5">Your teacher will update soon.</p>
+                  </>
+                )}
               </CardContent>
             </Card>
             <Card
@@ -148,8 +201,17 @@ export default function StudentDashboard() {
             >
               <CardContent className="p-5">
                 <p className="text-xs font-medium text-violet-600 mb-1">TOTAL COURSES</p>
-                <p className="text-3xl font-bold text-violet-700">—</p>
-                <p className="text-xs text-violet-500 mt-1">enrolled this term</p>
+                {totalCourses > 0 ? (
+                  <>
+                    <p className="text-3xl font-bold text-violet-700">{Math.floor(coursesCount)}</p>
+                    <p className="text-xs text-violet-500 mt-1">with active records</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold text-violet-700/80 leading-tight">No courses yet</p>
+                    <p className="text-xs text-violet-500 mt-1.5">Enrollment data not synced.</p>
+                  </>
+                )}
               </CardContent>
             </Card>
             <Card
@@ -158,7 +220,7 @@ export default function StudentDashboard() {
             >
               <CardContent className="p-5">
                 <p className="text-xs font-medium text-amber-600 mb-1">UPCOMING TESTS</p>
-                <p className="text-3xl font-bold text-amber-700">—</p>
+                <p className="text-3xl font-bold text-amber-700">{Math.floor(testsCount)}</p>
                 <p className="text-xs text-amber-500 mt-1">in the next 14 days</p>
               </CardContent>
             </Card>
